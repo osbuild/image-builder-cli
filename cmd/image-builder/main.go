@@ -64,6 +64,21 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	return outputManifest(distroName, imgType, archStr, opts)
 }
 
+func cmdBuild(cmd *cobra.Command, args []string) error {
+	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
+
+	distroName := args[0]
+	imgType := args[1]
+
+	opts := &cmdlineOpts{
+		dataDir: dataDir,
+	}
+	return buildImage(distroName, imgType, opts)
+}
+
 func run() error {
 	// images logs a bunch of stuff to Debug/Info that is distracting
 	// the user (at least by default, like what repos being loaded)
@@ -103,6 +118,19 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	}
 	// XXX: add blueprint switch
 	rootCmd.AddCommand(manifestCmd)
+
+	buildCmd := &cobra.Command{
+		Use:          "build <distro> <image-type>",
+		Short:        "Build the given distro/image-type, e.g. centos-9 qcow2",
+		RunE:         cmdBuild,
+		SilenceUsage: true,
+		Args:         cobra.ExactArgs(2),
+	}
+	rootCmd.AddCommand(buildCmd)
+	// XXX: move to rootCmd
+	buildCmd.Flags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
+	// XXX: add blueprint switch
+	// XXX2: add --output=text,json and streaming
 
 	return rootCmd.Execute()
 }
