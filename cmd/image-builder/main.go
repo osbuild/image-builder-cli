@@ -42,19 +42,29 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	return listImages(output, filter, opts)
 }
 
+func distroTypeArchFromArgs(args []string) (distroName, imgType, archStr string, err error) {
+	distroName = args[0]
+	imgType = args[1]
+	switch {
+	case len(args) == 2:
+		archStr = arch.Current().String()
+	case len(args) == 3:
+		archStr = args[2]
+	default:
+		return "", "", "", fmt.Errorf("unexpected extra arguments: %q", args[2:])
+	}
+	return distroName, imgType, archStr, nil
+}
+
 func cmdManifest(cmd *cobra.Command, args []string) error {
 	dataDir, err := cmd.Flags().GetString("datadir")
 	if err != nil {
 		return err
 	}
 
-	distroName := args[0]
-	imgType := args[1]
-	var archStr string
-	if len(args) > 2 {
-		archStr = args[2]
-	} else {
-		archStr = arch.Current().String()
+	distroName, imgType, archStr, err := distroTypeArchFromArgs(args)
+	if err != nil {
+		return err
 	}
 
 	opts := &cmdlineOpts{
@@ -70,13 +80,15 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	distroName := args[0]
-	imgType := args[1]
+	distroName, imgType, archStr, err := distroTypeArchFromArgs(args)
+	if err != nil {
+		return err
+	}
 
 	opts := &cmdlineOpts{
 		dataDir: dataDir,
 	}
-	return buildImage(distroName, imgType, opts)
+	return buildImage(distroName, imgType, archStr, opts)
 }
 
 func run() error {
@@ -124,7 +136,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Short:        "Build the given distro/image-type, e.g. centos-9 qcow2",
 		RunE:         cmdBuild,
 		SilenceUsage: true,
-		Args:         cobra.ExactArgs(2),
+		Args:         cobra.MinimumNArgs(2),
 	}
 	rootCmd.AddCommand(buildCmd)
 	// XXX: move to rootCmd
