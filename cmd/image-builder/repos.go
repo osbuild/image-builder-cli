@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/osbuild/images/pkg/reporegistry"
 )
 
@@ -21,8 +23,11 @@ var defaultDataDirs = []string{
 
 var newRepoRegistry = func(dataDir string) (*reporegistry.RepoRegistry, error) {
 	var dataDirs []string
+
 	if dataDir != "" {
 		dataDirs = []string{dataDir}
+	} else if envDataDir := os.Getenv("IMAGE_BUILDER_DATA_DIR"); envDataDir != "" {
+		dataDirs = []string{envDataDir}
 	} else {
 		dataDirs = defaultDataDirs
 	}
