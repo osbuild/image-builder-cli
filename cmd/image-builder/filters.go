@@ -10,12 +10,15 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
+var distrofactoryNew = distrofactory.NewDefault
+
 func newImageFilterDefault(dataDir string) (*imagefilter.ImageFilter, error) {
-	fac := distrofactory.NewDefault()
+	fac := distrofactoryNew()
 	repos, err := newRepoRegistry(dataDir)
 	if err != nil {
 		return nil, err
 	}
+
 	return imagefilter.New(fac, repos)
 }
 

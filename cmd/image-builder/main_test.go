@@ -3,6 +3,7 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -107,4 +108,36 @@ func TestListImagesOverrideDatadir(t *testing.T) {
 
 	err := main.Run()
 	assert.EqualError(t, err, `no repositories found in the given paths: [/this/path/does/not/exist]`)
+}
+
+func hasDepsolveDnf() bool {
+	// XXX: expose images/pkg/depsolve:findDepsolveDnf()
+	_, err := os.Stat("/usr/libexec/osbuild-depsolve-dnf")
+	return err == nil
+}
+
+// XXX: move to pytest like bib maybe?
+func TestManifestIntegrationSmoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{"manifest", "centos-9", "qcow2"})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	pipelineNames := pipelineNamesFrom(t, fakeStdout.Bytes())
+	assert.Contains(t, pipelineNames, "qcow2")
 }

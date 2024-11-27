@@ -5,12 +5,18 @@ import (
 	"io"
 	"os"
 
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
+	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 var (
 	GetOneImage = getOneImage
+	Run         = run
 )
+
+type ManifestGenerator = manifestGenerator
 
 func MockOsArgs(new []string) (restore func()) {
 	saved := os.Args
@@ -49,6 +55,32 @@ func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore 
 	}
 }
 
-var (
-	Run = run
-)
+func MockDistrofactoryNew(f func() *distrofactory.Factory) (restore func()) {
+	saved := distrofactoryNew
+	distrofactoryNew = f
+	return func() {
+		distrofactoryNew = saved
+	}
+}
+
+func MockDepsolve() (restore func()) {
+	saved := depsolve
+	// XXX: move to images
+	depsolve = func(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
+		depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+		repoSets := make(map[string][]rpmmd.RepoConfig)
+		for name, pkgSet := range packageSets {
+			depsolvedSets[name] = []rpmmd.PackageSpec{
+				{
+					Name:     pkgSet[0].Include[0],
+					Checksum: "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+				},
+			}
+			//repoSets[name] = res.Repos
+		}
+		return depsolvedSets, repoSets, nil
+	}
+	return func() {
+		depsolve = saved
+	}
+}
