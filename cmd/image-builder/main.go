@@ -7,6 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/osbuild/images/pkg/arch"
 )
 
 var (
@@ -40,6 +42,28 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	return listImages(output, filter, opts)
 }
 
+func cmdManifest(cmd *cobra.Command, args []string) error {
+	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
+
+	distroName := args[0]
+	imgType := args[1]
+	var archStr string
+	if len(args) > 2 {
+		archStr = args[2]
+	} else {
+		archStr = arch.Current().String()
+	}
+
+	opts := &cmdlineOpts{
+		out:     osStdout,
+		dataDir: dataDir,
+	}
+	return outputManifest(distroName, imgType, archStr, opts)
+}
+
 func run() error {
 	// images logs a bunch of stuff to Debug/Info that is distracting
 	// the user (at least by default, like what repos being loaded)
@@ -68,6 +92,17 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:rhel*")`)
 	listImagesCmd.Flags().String("output", "", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listImagesCmd)
+
+	manifestCmd := &cobra.Command{
+		Use:          "manifest <distro> <image-type> [<arch>]",
+		Short:        "Build manifest for the given distro/image-type, e.g. centos-9 qcow2",
+		RunE:         cmdManifest,
+		SilenceUsage: true,
+		Args:         cobra.MinimumNArgs(2),
+		Hidden:       true,
+	}
+	// XXX: add blueprint switch
+	rootCmd.AddCommand(manifestCmd)
 
 	return rootCmd.Execute()
 }
