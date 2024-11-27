@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -30,13 +29,18 @@ func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d dist
 	return depsolvedSets, repoSets, nil
 }
 
-func outputManifest(distroName, imgTypeStr, archStr string, opts *cmdlineOpts) error {
+func outputManifest(distroName, imgTypeStr, archStr string, opts *cmdlineOpts, blueprintPath string) error {
 	res, err := getOneImage(opts.dataDir, distroName, imgTypeStr, archStr)
 	if err != nil {
 		return err
 	}
 
-	var bp blueprint.Blueprint
+	// XXX: share with build
+	bp, err := loadBlueprint(blueprintPath)
+	if err != nil {
+		return err
+	}
+
 	// XXX: what/how much do we expose here?
 	options := distro.ImageOptions{}
 	distro := res.Distro
@@ -52,7 +56,7 @@ func outputManifest(distroName, imgTypeStr, archStr string, opts *cmdlineOpts) e
 	if err != nil {
 		return err
 	}
-	preManifest, warnings, err := imgType.Manifest(&bp, options, repos, 0)
+	preManifest, warnings, err := imgType.Manifest(bp, options, repos, 0)
 	if err != nil {
 		return err
 	}

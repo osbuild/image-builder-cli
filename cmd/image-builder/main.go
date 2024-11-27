@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	osStdout io.Writer = os.Stdout
-	osStderr io.Writer = os.Stderr
+	osStdin  io.ReadCloser = os.Stdin
+	osStdout io.Writer     = os.Stdout
+	osStderr io.Writer     = os.Stderr
 )
 
 type cmdlineOpts struct {
@@ -61,6 +62,10 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
+	if err != nil {
+		return err
+	}
 
 	distroName, imgType, archStr, err := distroTypeArchFromArgs(args)
 	if err != nil {
@@ -71,11 +76,15 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 		out:     osStdout,
 		dataDir: dataDir,
 	}
-	return outputManifest(distroName, imgType, archStr, opts)
+	return outputManifest(distroName, imgType, archStr, opts, blueprintPath)
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
 	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
 	if err != nil {
 		return err
 	}
@@ -88,7 +97,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	opts := &cmdlineOpts{
 		dataDir: dataDir,
 	}
-	return buildImage(distroName, imgType, archStr, opts)
+	return buildImage(distroName, imgType, archStr, opts, blueprintPath)
 }
 
 func run() error {
@@ -128,7 +137,8 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.MinimumNArgs(2),
 		Hidden:       true,
 	}
-	// XXX: add blueprint switch
+	// XXX: share with build
+	manifestCmd.Flags().String("blueprint", "", `pass a blueprint file`)
 	rootCmd.AddCommand(manifestCmd)
 
 	buildCmd := &cobra.Command{
@@ -141,7 +151,8 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	rootCmd.AddCommand(buildCmd)
 	// XXX: move to rootCmd
 	buildCmd.Flags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
-	// XXX: add blueprint switch
+	// XXX: share with manifest
+	buildCmd.Flags().String("blueprint", "", `pass a blueprint file`)
 	// XXX2: add --output=text,json and streaming
 
 	return rootCmd.Execute()

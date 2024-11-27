@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func buildImage(distroName, imgTypeStr, archStr string, opts *cmdlineOpts) error {
+func buildImage(distroName, imgTypeStr, archStr string, opts *cmdlineOpts, blueprintPath string) error {
 	res, err := getOneImage(opts.dataDir, distroName, imgTypeStr, archStr)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func buildImage(distroName, imgTypeStr, archStr string, opts *cmdlineOpts) error
 	// XXX: so messy, do not abuse cmdlineOpts.out for this buffer,
 	// refactor outputManifest instead
 	opts.out = &mf
-	if err := outputManifest(res.Distro.Name(), res.ImgType.Name(), res.Arch.Name(), opts); err != nil {
+	if err := outputManifest(res.Distro.Name(), res.ImgType.Name(), res.Arch.Name(), opts, blueprintPath); err != nil {
 		return err
 	}
 
