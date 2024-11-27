@@ -10,26 +10,30 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func buildImage(distroName, imgTypeStr string, opts *cmdlineOpts) error {
-	// cross arch building is not possible, we would have to download
-	// a pre-populated buildroot (tar,container) with rpm for that
-	archStr := arch.Current().String()
-	filterResult, err := getOneImage(opts.dataDir, distroName, imgTypeStr, archStr)
+func buildImage(distroName, imgTypeStr, archStr string, opts *cmdlineOpts) error {
+	res, err := getOneImage(opts.dataDir, distroName, imgTypeStr, archStr)
 	if err != nil {
 		return err
 	}
-	imgType := filterResult.ImgType
+	// cross arch building is not possible, we would have to download
+	// a pre-populated buildroot (tar,container) with rpm for that
+	if res.Arch.Name() != arch.Current().String() {
+		return fmt.Errorf("cannot build for arch %q from %q", res.Arch.Name(), arch.Current().String())
+	}
+
+	imgType := res.ImgType
 
 	var mf bytes.Buffer
-	// XXX: so messy
+	// XXX: so messy, do not abuse cmdlineOpts.out for this buffer,
+	// refactor outputManifest instead
 	opts.out = &mf
-	if err := outputManifest(distroName, imgTypeStr, archStr, opts); err != nil {
+	if err := outputManifest(res.Distro.Name(), res.ImgType.Name(), res.Arch.Name(), opts); err != nil {
 		return err
 	}
 
 	osbuildStoreDir := ".store"
 	outputDir := "."
-	buildName := fmt.Sprintf("%s-%s-%s", distroName, imgTypeStr, archStr)
+	buildName := fmt.Sprintf("%s-%s-%s", res.Distro.Name(), res.ImgType.Name(), res.Arch.Name())
 	jobOutputDir := filepath.Join(outputDir, buildName)
 	// XXX: support stremaing via statusWriter
 	_, err = osbuild.RunOSBuild(mf.Bytes(), osbuildStoreDir, jobOutputDir, imgType.Exports(), nil, nil, false, os.Stderr)
