@@ -9,14 +9,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/blueprint"
 
+	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 	"github.com/osbuild/image-builder-cli/internal/manifestgen"
 )
 
 var (
-	osStdout io.Writer = os.Stdout
-	osStderr io.Writer = os.Stderr
+	osStdin  io.ReadCloser = os.Stdin
+	osStdout io.Writer     = os.Stdout
+	osStderr io.Writer     = os.Stderr
 )
 
 func cmdListImages(cmd *cobra.Command, args []string) error {
@@ -38,6 +39,10 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
 	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
 	if err != nil {
 		return err
 	}
@@ -65,8 +70,12 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	var bp blueprint.Blueprint
-	return mg.Generate(&bp, res.Distro, res.ImgType, res.Arch, nil)
+	bp, err := blueprintload.Load(blueprintPath)
+	if err != nil {
+		return err
+	}
+
+	return mg.Generate(bp, res.Distro, res.ImgType, res.Arch, nil)
 }
 
 func run() error {
@@ -107,7 +116,8 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.MinimumNArgs(2),
 		Hidden:       true,
 	}
-	// XXX: add blueprint switch
+	// XXX: share with build
+	manifestCmd.Flags().String("blueprint", "", `pass a blueprint file`)
 	rootCmd.AddCommand(manifestCmd)
 
 	return rootCmd.Execute()
