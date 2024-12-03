@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/manifesttest"
+	"github.com/osbuild/image-builder-cli/internal/testutil"
 )
 
 func init() {
@@ -174,4 +176,74 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
 	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
 	assert.Contains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+}
+
+func TestBuildIntegrationHappy(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"--blueprint", makeTestBlueprint(t, testBlueprint),
+		"centos-9", "qcow2"},
+	)
+	defer restore()
+
+	script := `cat - > "$0".stdin`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	// ensure osbuild was run exactly one
+	assert.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
+	// and we passed the output dir
+	osbuildCall := fakeOsbuildCmd.Calls()[0]
+	outputDirPos := slices.Index(osbuildCall, "--output-directory")
+	assert.True(t, outputDirPos > -1)
+	assert.Equal(t, "centos-9-qcow2-x86_64", osbuildCall[outputDirPos+1])
+
+	// ... and that the manifest passed to osbuild
+	manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
+	assert.NoError(t, err)
+	// XXX: provide helpers in manifesttest to extract this in a nicer way
+	assert.Contains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+	assert.Contains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+}
+
+func TestBuildIntegrationErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"--blueprint", makeTestBlueprint(t, testBlueprint),
+		"centos-9", "qcow2"},
+	)
+	defer restore()
+
+	script := `
+cat - > "$0".stdin
+exit 1
+`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, "running osbuild failed: exit status 1")
 }

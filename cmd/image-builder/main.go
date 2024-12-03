@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -9,9 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/osbuild/images/pkg/arch"
-
-	"github.com/osbuild/image-builder-cli/internal/blueprintload"
-	"github.com/osbuild/image-builder-cli/internal/manifestgen"
+	"github.com/osbuild/images/pkg/imagefilter"
 )
 
 var (
@@ -37,51 +36,61 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	return listImages(dataDir, output, filter)
 }
 
-func cmdManifest(cmd *cobra.Command, args []string) error {
+func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("datadir")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	blueprintPath, err := cmd.Flags().GetString("blueprint")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	var archStr string
 	distroStr := args[0]
 	imgTypeStr := args[1]
-	var archStr string
-	if len(args) > 2 {
-		archStr = args[2]
-	} else {
+	switch {
+	case len(args) == 2:
 		archStr = arch.Current().String()
+	case len(args) == 3:
+		archStr = args[2]
+	default:
+		return nil, fmt.Errorf("unexpected extra arguments: %q", args[2:])
 	}
-	// XXX: this is not symetric, ideally we would only pass
-	// either a single reporegistry from a datadir everywhere
-	// or we would pass datadir everywhere but with just
-	// datadir we cannot create test distros as they cannot be
-	// defined outside of code so manifestgen needs to take a
-	// reporegistry instead of just a datadir
+
 	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	repos, err := newRepoRegistry(dataDir)
-	if err != nil {
-		return err
+	if archChecker != nil {
+		if err := archChecker(res.Arch.Name()); err != nil {
+			return nil, err
+		}
 	}
-	// XXX: add --rpmmd/cachedir option like bib
-	mg, err := manifestgen.New(repos, &manifestgen.Options{
-		Output: osStdout,
+
+	err = generateManifest(dataDir, blueprintPath, res, w)
+	return res, err
+}
+
+func cmdManifest(cmd *cobra.Command, args []string) error {
+	_, err := cmdManifestWrapper(cmd, args, osStdout, nil)
+	return err
+}
+
+func cmdBuild(cmd *cobra.Command, args []string) error {
+	var mf bytes.Buffer
+
+	// XXX: check env here, i.e. if user is root and osbuild is installed
+	res, err := cmdManifestWrapper(cmd, args, &mf, func(archStr string) error {
+		if archStr != arch.Current().String() {
+			return fmt.Errorf("cannot build for arch %q from %q", archStr, arch.Current().String())
+		}
+		return nil
 	})
 	if err != nil {
 		return err
 	}
-	bp, err := blueprintload.Load(blueprintPath)
-	if err != nil {
-		return err
-	}
-
-	return mg.Generate(bp, res.Distro, res.ImgType, res.Arch, nil)
+	return buildImage(res, mf.Bytes())
 }
 
 func run() error {
@@ -121,9 +130,18 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.MinimumNArgs(2),
 		Hidden:       true,
 	}
-	// XXX: share with build
 	manifestCmd.Flags().String("blueprint", "", `pass a blueprint file`)
 	rootCmd.AddCommand(manifestCmd)
+
+	buildCmd := &cobra.Command{
+		Use:          "build <distro> <image-type>",
+		Short:        "Build the given distro/image-type, e.g. centos-9 qcow2",
+		RunE:         cmdBuild,
+		SilenceUsage: true,
+		Args:         cobra.MinimumNArgs(2),
+	}
+	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
+	rootCmd.AddCommand(buildCmd)
 
 	return rootCmd.Execute()
 }
