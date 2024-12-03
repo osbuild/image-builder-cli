@@ -5,7 +5,13 @@ import (
 	"io"
 	"os"
 
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
+)
+
+var (
+	GetOneImage = getOneImage
+	Run         = run
 )
 
 func MockOsArgs(new []string) (restore func()) {
@@ -45,6 +51,10 @@ func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore 
 	}
 }
 
-var (
-	Run = run
-)
+func MockDistrofactoryNew(f func() *distrofactory.Factory) (restore func()) {
+	saved := distrofactoryNew
+	distrofactoryNew = f
+	return func() {
+		distrofactoryNew = saved
+	}
+}
