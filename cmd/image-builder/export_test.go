@@ -8,6 +8,11 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 )
 
+var (
+	GetOneImage = getOneImage
+	Run         = run
+)
+
 func MockOsArgs(new []string) (restore func()) {
 	saved := os.Args
 	os.Args = append([]string{"argv0"}, new...)
@@ -44,7 +49,3 @@ func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore 
 		newRepoRegistry = saved
 	}
 }
-
-var (
-	Run = run
-)

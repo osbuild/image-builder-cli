@@ -3,6 +3,8 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -11,6 +13,7 @@ import (
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
 	"github.com/osbuild/image-builder-cli/cmd/image-builder"
+	"github.com/osbuild/image-builder-cli/internal/manifesttest"
 )
 
 func init() {
@@ -122,4 +125,101 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 
 	err := main.Run()
 	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list-images"`)
+}
+
+func hasDepsolveDnf() bool {
+	// XXX: expose images/pkg/depsolve:findDepsolveDnf()
+	_, err := os.Stat("/usr/libexec/osbuild-depsolve-dnf")
+	return err == nil
+}
+
+var testBlueprint = `{
+  "containers": [
+    {
+      "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+    }
+  ],
+  "customizations": {
+    "user": [
+      {
+	"name": "alice"
+      }
+    ]
+  }
+}`
+
+func makeTestBlueprint(t *testing.T, testBlueprint string) string {
+	tmpdir := t.TempDir()
+	blueprintPath := filepath.Join(tmpdir, "blueprint.json")
+	err := os.WriteFile(blueprintPath, []byte(testBlueprint), 0644)
+	assert.NoError(t, err)
+	return blueprintPath
+}
+
+// XXX: move to pytest like bib maybe?
+func TestManifestIntegrationSmoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"centos-9", "qcow2",
+		makeTestBlueprint(t, testBlueprint),
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	assert.NoError(t, err)
+	assert.Contains(t, pipelineNames, "qcow2")
+
+	// XXX: provide helpers in manifesttest to extract this in a nicer way
+	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+	assert.Contains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+}
+
+func TestManifestIntegrationCrossArch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"centos-9", "tar",
+		"--arch", "s390x",
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	assert.NoError(t, err)
+	assert.Contains(t, pipelineNames, "archive")
+
+	// XXX: provide helpers in manifesttest to extract this in a nicer way
+	assert.Contains(t, fakeStdout.String(), `.el9.s390x.rpm`)
 }
