@@ -1,0 +1,80 @@
+{
+  "aarch64": [
+    {
+      "name": "AppStream",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    },
+    {
+      "name": "BaseOS",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    }
+  ],
+  "ppc64le": [
+    {
+      "name": "AppStream",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-ppc64le-appstream-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    },
+    {
+      "name": "BaseOS",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-ppc64le-baseos-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    }
+  ],
+  "s390x": [
+    {
+      "name": "AppStream",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    },
+    {
+      "name": "BaseOS",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    }
+  ],
+  "x86_64": [
+    {
+      "name": "AppStream",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-appstream-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    },
+    {
+      "name": "BaseOS",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-baseos-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    },
+    {
+      "name": "RT",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-rt-20241101",
+      "check_gpg": false,
+      "gpgkeys": []
+    },
+    {
+      "name": "google-compute-engine",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20241101",
+      "check_gpg": false,
+      "image_type_tags": [
+        "gce"
+      ]
+    },
+    {
+      "name": "google-cloud-sdk",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20241101",
+      "check_gpg": false,
+      "image_type_tags": [
+        "gce"
+      ]
+    }
+  ]
+}
