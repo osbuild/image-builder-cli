@@ -2,19 +2,21 @@ module github.com/osbuild/image-builder-cli
 
 // keep in sync with images,
 // c.f. https://github.com/osbuild/images/blob/main/go.mod
-go 1.21.0
+go 1.22.0
+
+toolchain go1.23.4
 
 require (
+	github.com/BurntSushi/toml v1.4.0
 	github.com/gobwas/glob v0.2.3
-	github.com/osbuild/images v0.98.0
+	github.com/osbuild/images v0.106.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
-	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Microsoft/hcsshim v0.12.5 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
@@ -121,3 +123,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/osbuild/images => github.com/mvo5/images v0.0.0-20241219113203-75ed105148af
