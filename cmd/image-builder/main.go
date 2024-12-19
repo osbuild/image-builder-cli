@@ -11,6 +11,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/osbuild/progress"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 )
@@ -37,7 +38,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	return listImages(dataDir, output, filter)
 }
 
-func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("datadir")
 	if err != nil {
 		return nil, err
@@ -53,6 +54,9 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
+	pbar.SetPulseMsgf("Manifest generation step")
+	// XXX: add more here
+	pbar.SetMessagef("Building manifest for %s", distroStr)
 
 	var blueprintPath string
 	imgTypeStr := args[0]
@@ -83,7 +87,11 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
-	_, err := cmdManifestWrapper(cmd, args, osStdout, nil)
+	pbar, err := progress.New("")
+	if err != nil {
+		return err
+	}
+	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, nil)
 	return err
 }
 
@@ -93,9 +101,17 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// XXX: hardcoded
+	pbar, err := progress.New("term")
+	if err != nil {
+		return err
+	}
+	pbar.Start()
+	defer pbar.Stop()
+
 	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
-	res, err := cmdManifestWrapper(cmd, args, &mf, func(archStr string) error {
+	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, func(archStr string) error {
 		if archStr != arch.Current().String() {
 			return fmt.Errorf("cannot build for arch %q from %q", archStr, arch.Current().String())
 		}
@@ -105,7 +121,8 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return buildImage(res, mf.Bytes(), storeDir)
+	pbar.SetPulseMsgf("Image building step")
+	return buildImage(pbar, res, mf.Bytes(), storeDir)
 }
 
 func run() error {
