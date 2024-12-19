@@ -1,0 +1,3 @@
+rpmbuild
+vendor
+release_artifacts
