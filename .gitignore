@@ -1,3 +1,6 @@
 rpmbuild
 vendor
 release_artifacts
+*.swp
+dictionary.dic
+__pycache__
