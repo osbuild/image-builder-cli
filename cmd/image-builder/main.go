@@ -108,6 +108,29 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	return buildImage(res, mf.Bytes(), storeDir)
 }
 
+func cmdDescribeImg(cmd *cobra.Command, args []string) error {
+	// XXX: boilderplate identical to cmdManifest() above
+	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
+	archStr, err := cmd.Flags().GetString("arch")
+	if err != nil {
+		return err
+	}
+	if archStr == "" {
+		archStr = arch.Current().String()
+	}
+	distroStr := args[0]
+	imgTypeStr := args[1]
+	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	if err != nil {
+		return err
+	}
+
+	return describeImage(res, osStdout)
+}
+
 func run() error {
 	// images logs a bunch of stuff to Debug/Info that is distracting
 	// the user (at least by default, like what repos being loaded)
@@ -161,6 +184,18 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
 	buildCmd.Flags().String("store", "/var/cache/image-builder/store", `osbuild store directory to cache intermediata build artifacts"`)
 	rootCmd.AddCommand(buildCmd)
+
+	// XXX: add --format=json too?
+	describeImgCmd := &cobra.Command{
+		Use:          "describe-image <distro> <image-type>",
+		Short:        "describe the given distro/image-type, e.g. centos-9 qcow2",
+		RunE:         cmdDescribeImg,
+		SilenceUsage: true,
+		Args:         cobra.ExactArgs(2),
+		Hidden:       true,
+	}
+	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
+	rootCmd.AddCommand(describeImgCmd)
 
 	return rootCmd.Execute()
 }
