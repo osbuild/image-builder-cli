@@ -1,0 +1,14 @@
+backend
+bootc
+bootmode
+buildable
+Changelog
+cli
+distro
+github
+globbing
+https
+json
+osbuild
+qcow
+UEFI

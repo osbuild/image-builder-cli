@@ -1,26 +1,37 @@
 name: Integration tests
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   merge_group:
-    types: [ "checks_requested" ]
+    types: ["checks_requested"]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install yamllint
+        run: sudo apt-get install -y yamllint aspell
+      - name: "Clone Repository"
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+      - name: Run linters
+        run: make lint
+
   build:
     runs-on: ubuntu-latest
-    uses:  ./.github/workflows/testdeps.yaml
+    uses: ./.github/workflows/testdeps.yaml
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Install integration test env
+        run: |
+          sudo apt update
+          sudo apt install -y pytest golang
 
-    - name: Install integration test env
-      run: |
-        sudo apt update
-        sudo apt install -y pytest golang
-
-    - name: Run integration tests via pytest
-      run: |
-        # use "-s" for now for easier debugging
-        sudo pytest -s -v
+      - name: Run integration tests via pytest
+        run: |
+          # use "-s" for now for easier debugging
+          sudo pytest -s -v
