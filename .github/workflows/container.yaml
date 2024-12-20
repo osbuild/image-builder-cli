@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate container image metadata
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         id: meta
         with:
           images: ghcr.io/osbuild/image-builder-cli
