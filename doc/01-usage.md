@@ -29,6 +29,8 @@ fedora-41 type:wsl arch:x86_64
 # ...
 ```
 
+# Blueprints
+
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we can build the `qcow2` we built above with some customizations applied.
 
 We'll be adding the `nginx`, and `haproxy` packages and enabling their services so they start on boot. We'll also add a user by the name `user` with an ssh key and set the hostname of the machine:
