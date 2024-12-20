@@ -1,6 +1,6 @@
 # Installation
 
-As `image-builder-cli` is still in development its packages are not yet included in any distribution. There are however multiple ways that you can already use it.
+As `image-builder-cli` is still in development its packages are not yet included in any distribution. There are however multiple ways that you can already use it. After you have `image-builder-cli` installed take a look at its [usage](./01-usage.md).
 
 ## Container
 
