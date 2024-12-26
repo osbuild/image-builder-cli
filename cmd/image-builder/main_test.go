@@ -317,3 +317,25 @@ exit 1
 	// osbuild-exec.go)
 	assert.Equal(t, "error on stderr\n", fakeStderr.String())
 }
+
+func TestDescribeImageSmoke(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"describe-image",
+		"centos-9", "qcow2",
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	assert.Contains(t, fakeStdout.String(), `distro: centos-9
+type: qcow2
+arch: x86_64`)
+}
