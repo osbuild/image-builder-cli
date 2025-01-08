@@ -31,10 +31,8 @@ we plan to provide rpm packages as well.
 
 Make sure to have the required `osbuild` RPMs installed:
 ```console
-$ sudo dnf install osbuild osbuild-depsolve-dnf osbuild-composer
+$ sudo dnf install osbuild osbuild-depsolve-dnf
 ```
-(`osbuild-composer` is only needed to get the repository definitions
-and this dependency will go away soon).
 
 ## Examples
 

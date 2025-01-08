@@ -91,6 +91,13 @@ GOTAGS="exclude_graphdriver_btrfs"
 install -m 0755 -vd                                 %{buildroot}%{_bindir}
 install -m 0755 -vp %{gobuilddir}/bin/image-builder %{buildroot}%{_bindir}/
 
+install -m 0755 -vd                                 %{buildroot}%{_sysconfdir}/image-builder/repositories
+install -m 0755 -vd                                 %{buildroot}%{_datadir}/image-builder/repositories
+for REPO_FILE in $(ls %{_goipath}/vendor/github.com/osbuild/images/data/repositories/*.json); do
+    install -m 0644 -vp ${REPO_FILE} %{buildroot}%{_datadir}/image-builder/repositories/${REPO_FILE}
+done
+
+
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
