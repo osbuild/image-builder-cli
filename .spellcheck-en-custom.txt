@@ -15,3 +15,14 @@ UEFI
 datadir
 copr
 toml
+customizations
+entrypoint
+fedoraproject
+filesystems
+namespaced
+untrusted
+hostname
+roadmap
+usecase
+COPR
+pre
