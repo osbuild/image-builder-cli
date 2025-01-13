@@ -36,7 +36,7 @@ Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/b
 We'll be adding the `nginx`, and `haproxy` packages and enabling their services so they start on boot. We'll also add a user by the name `user` with an ssh key and set the hostname of the machine:
 
 ```
-€ cat blueprint.toml 
+€ cat blueprint.toml
 packages = [
     { name = "nginx" },
     { name = "haproxy" },
