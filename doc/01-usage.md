@@ -51,7 +51,7 @@ enabled = ["nginx", "haproxy"]
 [[customizations.user]]
 name = "user"
 key = "REDACTED"
-€ image-builder build --distro fedora-41 qcow2 blueprint.toml
+€ image-builder build --blueprint blueprint.toml --distro fedora-41 qcow2
 # ...
 ```
 
