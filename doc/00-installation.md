@@ -33,17 +33,17 @@ If you're on a distribution that uses the RPM package format we also build RPMs 
 
 You can also run `image-builder-cli` directly with Go's package management.
 
-_Doing this requires the pre-installation of `osbuild-composer` from your distributions package manager._
+_Doing this requires the pre-installation of `osbuild`, and `osbuild-depsolve-dnf` from your distributions package manager or having them otherwise available on your system._
 
 ```
-€ sudo go run 'github.com/osbuild/image-builder-cli/cmd/image-builder@main' build --distro fedora-41 minimal-raw
+€ sudo go run github.com/osbuild/image-builder-cli/cmd/image-builder@main build --distro fedora-41 minimal-raw
 # ...
 ```
 
-While not recommended you can also install `image-builder-cli` directly with Go:
+You can also install `image-builder-cli` directly with Go:
 
 ```
-€ sudo go install 'github.com/osbuild/image-builder-cli/cmd/image-builder'
+€ go install github.com/osbuild/image-builder-cli/cmd/image-builder
 # ...
 € sudo image-builder build --distro fedora-41 minimal-raw
 # ...
@@ -53,7 +53,7 @@ While not recommended you can also install `image-builder-cli` directly with Go:
 
 Another option, and this might be most useful while hacking on the source is to run directly from a source checkout.
 
-_Doing this requires the pre-installation of `osbuild-composer` from your distributions package manager._
+_Doing this requires the pre-installation of `osbuild`, and `osbuild-depsolve-dnf` from your distributions package manager or having them otherwise available on your system._
 
 
 ```
