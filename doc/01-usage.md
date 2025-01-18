@@ -55,4 +55,4 @@ key = "REDACTED"
 # ...
 ```
 
-_Note that blueprints are aimed at end-user or systems administrator customizations. They take care to not break image builds and due to that they are not the right abstraction level for those who want to build or maintain entire distributions. For those interested in that usecase please take a look at the roadmap._
+_Note that blueprints are aimed at end-user or systems administrator customizations. They take care to not break image builds and due to that they are not the right abstraction level for those who want to build or maintain entire distributions. For those interested in that use case please take a look at the roadmap._

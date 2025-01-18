@@ -23,6 +23,5 @@ namespaced
 untrusted
 hostname
 roadmap
-usecase
 COPR
 pre
