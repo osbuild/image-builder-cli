@@ -8,7 +8,7 @@ import pytest
 def build_container_fixture():
     """Build a container from the Containerfile and returns the name"""
 
-    container_tag = "image-builder-cli-test"
+    container_tag = "image-builder-test"
     subprocess.check_call([
         "podman", "build",
         "-f", "Containerfile",
