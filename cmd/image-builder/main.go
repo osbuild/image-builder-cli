@@ -33,7 +33,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	output, err := cmd.Flags().GetString("output")
+	format, err := cmd.Flags().GetString("format")
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return listImages(defsDir, output, filter)
+	return listImages(defsDir, format, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -230,7 +230,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Args:         cobra.NoArgs,
 	}
 	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
-	listImagesCmd.Flags().String("output", "", "Output in a specific format (text, json)")
+	listImagesCmd.Flags().String("format", "", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listImagesCmd)
 
 	manifestCmd := &cobra.Command{

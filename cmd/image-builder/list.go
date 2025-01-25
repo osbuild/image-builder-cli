@@ -4,7 +4,7 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func listImages(dataDir, output string, filterExprs []string) error {
+func listImages(dataDir, format string, filterExprs []string) error {
 	imageFilter, err := newImageFilterDefault(dataDir)
 	if err != nil {
 		return err
@@ -15,7 +15,7 @@ func listImages(dataDir, output string, filterExprs []string) error {
 		return err
 	}
 
-	fmter, err := imagefilter.NewResultsFormatter(imagefilter.OutputFormat(output))
+	fmter, err := imagefilter.NewResultsFormatter(imagefilter.OutputFormat(format))
 	if err != nil {
 		return err
 	}
