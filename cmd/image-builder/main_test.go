@@ -52,7 +52,7 @@ func TestListImagesNoArgsOutputJSON(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs([]string{"list-images", "--output=json"})
+	restore = main.MockOsArgs([]string{"list-images", "--format=json"})
 	defer restore()
 
 	var fakeStdout bytes.Buffer
