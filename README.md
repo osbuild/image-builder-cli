@@ -183,9 +183,9 @@ A: The osbuild binary is used to actually build the images but beyond that
 
 Q: Can I have custom repository files?
 A: Sure! The repositories are encoded in json in "<distro>-<vesion>.json",
-   files, e.g. "fedora-41.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--datadir" switch and
+   files, e.g. "fedora-41.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--defs" switch and
    place them under "repositories/name-version.json", e.g. for:
-   "--datadir ~/my-project --distro foo-1" a json file must be put under
+   "--defs ~/my-project --distro foo-1" a json file must be put under
    "~/my-project/repositories/foo-1.json.
 
 Q: What is the relation to [bootc-image-builder](https://github.com/osbuild/bootc-image-builder)?

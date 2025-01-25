@@ -37,12 +37,12 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	dataDir, err := cmd.Flags().GetString("datadir")
+	defsDir, err := cmd.Flags().GetString("defs")
 	if err != nil {
 		return err
 	}
 
-	return listImages(dataDir, output, filter)
+	return listImages(defsDir, output, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -71,7 +71,7 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 }
 
 func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
-	dataDir, err := cmd.Flags().GetString("datadir")
+	defsDir, err := cmd.Flags().GetString("defs")
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		return nil, err
 	}
 
-	img, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	img, err := getOneImage(defsDir, distroStr, imgTypeStr, archStr)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		RpmDownloader: rpmDownloader,
 		WithSBOM:      withSBOM,
 	}
-	err = generateManifest(dataDir, img, w, opts)
+	err = generateManifest(defsDir, img, w, opts)
 	return img, err
 }
 
@@ -217,7 +217,7 @@ Image-builder builds operating system images for a range of predefined
 operating systems like Fedora, CentOS and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
-	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().String("defs", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
