@@ -89,7 +89,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
-	outputDir, err := cmd.Flags().GetString("output-dir")
+	outputDir, err := cmd.Flags().GetString("output")
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	outputDir, err := cmd.Flags().GetString("output-dir")
+	outputDir, err := cmd.Flags().GetString("output")
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().String("defs", "", `Override the default definitions directory for e.g. custom repositories/*.json data`)
-	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified direcotry`)
+	rootCmd.PersistentFlags().String("output", "", `Put output into the specified direcotry`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 

@@ -402,7 +402,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 				"qcow2",
 				"--distro", "centos-9",
 				"--cache", cacheDir,
-				"--output-dir", outputDir,
+				"--output", outputDir,
 			}
 			cmd = append(cmd, tc.args...)
 			restore = main.MockOsArgs(cmd)
@@ -493,7 +493,7 @@ func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
 		"--distro=centos-9",
 		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
 		"--with-sbom",
-		"--output-dir", outputDir,
+		"--output", outputDir,
 	})
 	defer restore()
 
