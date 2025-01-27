@@ -26,9 +26,21 @@ func buildImage(res *imagefilter.Result, osbuildManifest []byte, opts *buildOpti
 	if opts.OutputDir == "" {
 		opts.OutputDir = outputNameFor(res)
 	}
+
 	if opts.WriteManifest {
-		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.osbuild-manifest.json", outputNameFor(res)))
-		if err := os.WriteFile(p, osbuildManifest, 0644); err != nil {
+		outputDir := opts.OutputDir
+
+		if outputDir == "" {
+			outputDir = outputNameFor(res)
+		}
+
+		if err := os.MkdirAll(outputDir, 0755); err != nil {
+			return err
+		}
+
+		manifestPath := filepath.Join(outputDir, fmt.Sprintf("%s.osbuild-manifest.json", outputNameFor(res)))
+
+		if err := os.WriteFile(manifestPath, osbuildManifest, 0644); err != nil {
 			return err
 		}
 	}
