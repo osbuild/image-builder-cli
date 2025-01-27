@@ -32,16 +32,16 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	output, err := cmd.Flags().GetString("output")
+	format, err := cmd.Flags().GetString("format")
 	if err != nil {
 		return err
 	}
-	dataDir, err := cmd.Flags().GetString("datadir")
+	defsDir, err := cmd.Flags().GetString("defs")
 	if err != nil {
 		return err
 	}
 
-	return listImages(dataDir, output, filter)
+	return listImages(defsDir, format, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -70,7 +70,7 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 }
 
 func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
-	dataDir, err := cmd.Flags().GetString("datadir")
+	defsDir, err := cmd.Flags().GetString("defs")
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
-	outputDir, err := cmd.Flags().GetString("output-dir")
+	outputDir, err := cmd.Flags().GetString("output")
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		return nil, err
 	}
 
-	img, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	img, err := getOneImage(defsDir, distroStr, imgTypeStr, archStr)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		RpmDownloader: rpmDownloader,
 		WithSBOM:      withSBOM,
 	}
-	err = generateManifest(dataDir, img, w, opts)
+	err = generateManifest(defsDir, img, w, opts)
 	return img, err
 }
 
@@ -154,7 +154,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	outputDir, err := cmd.Flags().GetString("output-dir")
+	outputDir, err := cmd.Flags().GetString("output")
 	if err != nil {
 		return err
 	}
@@ -199,8 +199,8 @@ Image-builder builds operating system images for a range of predefined
 operating sytsems like centos and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
-	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
-	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified direcotry`)
+	rootCmd.PersistentFlags().String("defs", "", `Override the default definitions directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().String("output", "", `Put output into the specified direcotry`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
@@ -212,7 +212,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.NoArgs,
 	}
 	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
-	listImagesCmd.Flags().String("output", "", "Output in a specific format (text, json)")
+	listImagesCmd.Flags().String("format", "", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listImagesCmd)
 
 	manifestCmd := &cobra.Command{
