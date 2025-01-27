@@ -148,7 +148,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
-	pbar, err := progress.New("", nil)
+	pbar, err := progress.New("")
 	if err != nil {
 		return err
 	}
@@ -173,8 +173,12 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	withBuildlog, err := cmd.Flags().GetBool("with-buildlog")
+	if err != nil {
+		return err
+	}
 
-	pbar, err := progress.New(progressType, &progress.Options{Output: osStdout})
+	pbar, err := progress.New(progressType)
 	if err != nil {
 		return err
 	}
@@ -197,6 +201,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		OutputDir:     outputDir,
 		StoreDir:      cacheDir,
 		WriteManifest: withManifest,
+		WriteBuildlog: withBuildlog,
 	}
 	pbar.SetPulseMsgf("Image building step")
 	return buildImage(pbar, res, mf.Bytes(), buildOpts)
@@ -260,6 +265,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
+	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
 	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
 	// XXX: add "--verbose" here, similar to how bib is doing this
