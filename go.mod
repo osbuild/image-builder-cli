@@ -7,7 +7,7 @@ go 1.21.0
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/gobwas/glob v0.2.3
-	github.com/osbuild/images v0.111.1-0.20250124075826-58bc61d3c5d9
+	github.com/osbuild/images v0.112.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
