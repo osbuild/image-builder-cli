@@ -148,7 +148,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
-	pbar, err := progress.New("")
+	pbar, err := progress.New("", nil)
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	pbar, err := progress.New(progressType)
+	pbar, err := progress.New(progressType, &progress.Options{Output: osStdout})
 	if err != nil {
 		return err
 	}

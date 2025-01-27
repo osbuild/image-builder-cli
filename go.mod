@@ -6,6 +6,8 @@ go 1.22.0
 
 toolchain go1.22.2
 
+replace github.com/osbuild/bootc-image-builder/bib => /home/mvogt/devel/osbuild/bootc-image-builder/bib
+
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/gobwas/glob v0.2.3
@@ -128,3 +130,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/osbuild/bootc-image-builder => github.com/mvo5/bootc-image-builder v0.0.0-20250127161350-f4ee6892c4fc
