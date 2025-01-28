@@ -52,3 +52,25 @@ def test_container_manifest_generates_sbom(tmp_path, build_container):
     sbom_json = json.loads(image_sbom_json_path.read_text())
     # smoke test that we have glibc in the json doc
     assert "glibc" in [s["name"] for s in sbom_json["packages"]], f"missing glibc in {sbom_json}"
+
+
+@pytest.mark.parametrize("progress,needle,forbidden", [
+    ("verbose", "osbuild-stdout-output", "[|]"),
+    ("term", "[|]", "osbuild-stdout-output"),
+])
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_container_with_progress(tmp_path, build_fake_container, progress, needle, forbidden):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    output = subprocess.check_output([
+        "podman", "run", "-t",
+        "--privileged",
+        "-v", f"{output_dir}:/output",
+        build_fake_container,
+        "build",
+        "minimal-raw",
+        "--distro", "centos-9",
+        f"--progress={progress}",
+    ], text=True)
+    assert needle in output
+    assert forbidden not in output
