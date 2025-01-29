@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/osbuild/bootc-image-builder/bib/pkg/progress"
 	"github.com/osbuild/images/pkg/imagefilter"
-	"github.com/osbuild/images/pkg/osbuild"
 )
 
 type buildOptions struct {
@@ -14,9 +14,10 @@ type buildOptions struct {
 	StoreDir  string
 
 	WriteManifest bool
+	WriteBuildlog bool
 }
 
-func buildImage(res *imagefilter.Result, osbuildManifest []byte, opts *buildOptions) error {
+func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManifest []byte, opts *buildOptions) error {
 	if opts == nil {
 		opts = &buildOptions{}
 	}
@@ -36,8 +37,19 @@ func buildImage(res *imagefilter.Result, osbuildManifest []byte, opts *buildOpti
 		}
 	}
 
-	// XXX: support stremaing via images/pkg/osbuild/monitor.go
-	_, err := osbuild.RunOSBuild(osbuildManifest, opts.StoreDir, opts.OutputDir, res.ImgType.Exports(), nil, nil, false, osStderr)
-	return err
+	osbuildOpts := &progress.OSBuildOptions{
+		StoreDir:  opts.StoreDir,
+		OutputDir: opts.OutputDir,
+	}
+	if opts.WriteBuildlog {
+		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.buildlog", outputNameFor(res)))
+		f, err := os.Create(p)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
 
+		osbuildOpts.BuildLog = f
+	}
+	return progress.RunOSBuild(pbar, osbuildManifest, res.ImgType.Exports(), osbuildOpts)
 }

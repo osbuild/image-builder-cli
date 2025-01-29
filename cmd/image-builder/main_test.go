@@ -14,6 +14,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
@@ -382,6 +383,9 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			[]string{"--with-manifest"},
 			[]string{"centos-9-qcow2-x86_64.osbuild-manifest.json"},
 		}, {
+			[]string{"--with-buildlog"},
+			[]string{"centos-9-qcow2-x86_64.buildlog"},
+		}, {
 			[]string{"--with-sbom"},
 			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
 				"centos-9-qcow2-x86_64.image-os.spdx.json",
@@ -413,7 +417,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			defer fakeOsbuildCmd.Restore()
 
 			err := main.Run()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			// ensure output dir override works
 			osbuildCall := fakeOsbuildCmd.Calls()[0]
