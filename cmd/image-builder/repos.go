@@ -7,6 +7,7 @@ import (
 
 	"github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/reporegistry"
+	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // defaultDataDirs contains the default search paths to look for repository
@@ -19,7 +20,7 @@ var defaultDataDirs = []string{
 	"/usr/share/image-builder",
 }
 
-var newRepoRegistry = func(dataDir string) (*reporegistry.RepoRegistry, error) {
+var newRepoRegistry = func(dataDir, extraRepoPath string) (*reporegistry.RepoRegistry, error) {
 	var dataDirs []string
 	if dataDir != "" {
 		dataDirs = []string{dataDir}
@@ -39,5 +40,29 @@ var newRepoRegistry = func(dataDir string) (*reporegistry.RepoRegistry, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// XXX: this should probably go into manifestgen.Options as
+	// a new Options.ExtraRepoConf eventually (just like OverrideRepos)
+	if extraRepoPath != "" {
+		// XXX: this loads the extra repo unconditionally to all
+		// distro versions. good luck with that!
+		// Jokes aside, its unclear if we can do better without
+		// burdens like forcing the user to name the file distro
+		// after the $distro-$version.json
+		// XXX2: should we just support yum repo formats here and
+		// just internally convert to our json format?
+		extraRepo, err := rpmmd.LoadRepositoriesFromFile(extraRepoPath)
+		if err != nil {
+			return nil, err
+		}
+		for _, repoArchConfigs := range conf {
+			for arch := range repoArchConfigs {
+				archCfg := repoArchConfigs[arch]
+				archCfg = append(archCfg, extraRepo[arch]...)
+				repoArchConfigs[arch] = archCfg
+			}
+		}
+	}
+
 	return reporegistry.NewFromDistrosRepoConfigs(conf), nil
 }

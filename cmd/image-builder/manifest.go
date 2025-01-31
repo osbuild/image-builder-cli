@@ -39,8 +39,8 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 	return nil
 }
 
-func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
-	repos, err := newRepoRegistry(dataDir)
+func generateManifest(dataDir, extraRepoPath string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
+	repos, err := newRepoRegistry(dataDir, extraRepoPath)
 	if err != nil {
 		return err
 	}
