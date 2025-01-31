@@ -41,8 +41,12 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	extraRepoPath, err := cmd.Flags().GetString("extra-repo-path")
+	if err != nil {
+		return err
+	}
 
-	return listImages(dataDir, output, filter)
+	return listImages(dataDir, extraRepoPath, output, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -72,6 +76,10 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 
 func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return nil, err
+	}
+	extraRepoPath, err := cmd.Flags().GetString("extra-repo-path")
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +134,9 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		return nil, err
 	}
 
-	img, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	// XXX: instead of passing dataDir, extraRepoPath as two strings,
+	// create a repoPaths (or similar) struct
+	img, err := getOneImage(dataDir, extraRepoPath, distroStr, imgTypeStr, archStr)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +153,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		RpmDownloader: rpmDownloader,
 		WithSBOM:      withSBOM,
 	}
-	err = generateManifest(dataDir, img, w, opts)
+	err = generateManifest(dataDir, extraRepoPath, img, w, opts)
 	return img, err
 }
 
@@ -222,6 +232,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().String("extra-repo-path", "", `Add a json repository file to the default repositories`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)

@@ -4,8 +4,8 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func listImages(dataDir, output string, filterExprs []string) error {
-	imageFilter, err := newImageFilterDefault(dataDir)
+func listImages(dataDir, extraRepoFile, output string, filterExprs []string) error {
+	imageFilter, err := newImageFilterDefault(dataDir, extraRepoFile)
 	if err != nil {
 		return err
 	}

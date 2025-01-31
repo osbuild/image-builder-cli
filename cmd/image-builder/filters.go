@@ -10,9 +10,9 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func newImageFilterDefault(dataDir string) (*imagefilter.ImageFilter, error) {
+func newImageFilterDefault(dataDir, extraRepoFile string) (*imagefilter.ImageFilter, error) {
 	fac := distrofactory.NewDefault()
-	repos, err := newRepoRegistry(dataDir)
+	repos, err := newRepoRegistry(dataDir, extraRepoFile)
 	if err != nil {
 		return nil, err
 	}
@@ -21,8 +21,8 @@ func newImageFilterDefault(dataDir string) (*imagefilter.ImageFilter, error) {
 }
 
 // should this be moved to images:imagefilter?
-func getOneImage(dataDir, distroName, imgTypeStr, archStr string) (*imagefilter.Result, error) {
-	imageFilter, err := newImageFilterDefault(dataDir)
+func getOneImage(dataDir, extraRepoFile, distroName, imgTypeStr, archStr string) (*imagefilter.Result, error) {
+	imageFilter, err := newImageFilterDefault(dataDir, extraRepoFile)
 	if err != nil {
 		return nil, err
 	}
