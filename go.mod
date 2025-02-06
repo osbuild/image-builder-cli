@@ -9,7 +9,7 @@ toolchain go1.22.2
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/gobwas/glob v0.2.3
-	github.com/osbuild/bootc-image-builder/bib v0.0.0-20250128074618-f6403409fc97
+	github.com/osbuild/bootc-image-builder/bib v0.0.0-20250205182004-b35eaa8a3a91
 	github.com/osbuild/images v0.112.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1

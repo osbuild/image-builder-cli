@@ -222,6 +222,8 @@ github.com/osbuild/bootc-image-builder/bib v0.0.0-20250125114430-c5d674173ba0 h1
 github.com/osbuild/bootc-image-builder/bib v0.0.0-20250125114430-c5d674173ba0/go.mod h1:22erXOiwfznPLNE5Y8hp35fnE0vh5ZjWp/iIQsVnYTg=
 github.com/osbuild/bootc-image-builder/bib v0.0.0-20250128074618-f6403409fc97 h1:Xyv+vDEGCcG1qkHkdQFPBXhvM5WiMiAJm/AjBkzW4Sw=
 github.com/osbuild/bootc-image-builder/bib v0.0.0-20250128074618-f6403409fc97/go.mod h1:22erXOiwfznPLNE5Y8hp35fnE0vh5ZjWp/iIQsVnYTg=
+github.com/osbuild/bootc-image-builder/bib v0.0.0-20250205182004-b35eaa8a3a91 h1:80EI+8V4tOv+sMygoTP8YY+4IIkw1axuuvRHvz7S9HQ=
+github.com/osbuild/bootc-image-builder/bib v0.0.0-20250205182004-b35eaa8a3a91/go.mod h1:22erXOiwfznPLNE5Y8hp35fnE0vh5ZjWp/iIQsVnYTg=
 github.com/osbuild/images v0.112.0 h1:+pKwPniwYTRRgist6V+7DQfZEg7osddl1z4pASecq4M=
 github.com/osbuild/images v0.112.0/go.mod h1:58tzp7jV50rjaH9gMpvmQdVati0c4TaC5Op7wmSD/tY=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f h1:/UDgs8FGMqwnHagNDPGOlts35QkhAZ8by3DR7nMih7M=
