@@ -25,6 +25,13 @@ RST2MAN ?= rst2man
 GOLANGCI_LINT_VERSION=v1.55
 GOLANGCI_LINT_CACHE_DIR=$(HOME)/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION)
 GOLANGCI_COMPOSER_IMAGE=composer_golangci
+
+# Using pipe instead of comma as we don't need the
+# 'gatekeeper' functionality, it should just work.
+# https://go.dev/ref/mod#module-proxy
+GOPROXY?=https://proxy.golang.org|direct
+export GOPROXY
+
 #
 # Automatic Variables
 #
@@ -118,16 +125,21 @@ clean:  ## Remove all built binaries
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
-RPM_SPECFILE=rpmbuild/SPECS/image-builder.spec
+RPM_SPECFILE_NAME=image-builder.spec
+RPM_SPECFILE=rpmbuild/SPECS/$(RPM_SPECFILE_NAME)
 RPM_TARBALL=rpmbuild/SOURCES/$(PACKAGE_NAME_COMMIT).tar.gz
 RPM_TARBALL_VERSIONED=rpmbuild/SOURCES/$(PACKAGE_NAME_VERSION).tar.gz
 
 .PHONY: $(RPM_SPECFILE)
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	git show HEAD:image-builder.spec > $(RPM_SPECFILE)
+	git show HEAD:$(RPM_SPECFILE_NAME) > $(RPM_SPECFILE)
 	go mod vendor
 	./tools/rpm_spec_add_provides_bundle.sh $(RPM_SPECFILE)
+
+.PHONY: patch-spec-in-place
+patch-spec-in-place: $(RPM_SPECFILE) ## patch image-builder.spec in-place for build systems
+	cp $< $(RPM_SPECFILE_NAME)
 
 # This is the syntax to essentially get
 # either PACKAGE_NAME_COMMIT or PACKAGE_NAME_VERSION dynamically
