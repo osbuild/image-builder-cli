@@ -9,7 +9,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.6
 	github.com/gobwas/glob v0.2.3
 	github.com/osbuild/bootc-image-builder/bib v0.0.0-20250205182004-b35eaa8a3a91
-	github.com/osbuild/images v0.116.0
+	github.com/osbuild/images v0.116.1-0.20250211125602-fa630cd456b7
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
