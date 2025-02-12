@@ -4,3 +4,4 @@ release_artifacts
 *.swp
 dictionary.dic
 __pycache__
+/bin
