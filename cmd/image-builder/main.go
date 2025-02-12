@@ -213,13 +213,11 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var uploadUnsupported *UploadTypeUnsupportedError
-	var missingUploadConfig *MissingUploadConfigError
 	uploader, err := uploaderFor(cmd, res.ImgType.Name())
-	if err != nil && !errors.As(err, &missingUploadConfig) && !errors.As(err, &uploadUnsupported) {
+	if err != nil && !errors.Is(err, ErrUpload) {
 		return err
 	}
-	if missingUploadConfig != nil && !missingUploadConfig.allMissing {
+	if err != nil && !errors.Is(err, ErrMissingUploadConfig) {
 		return fmt.Errorf("partial upload config provided: %w", err)
 	}
 
