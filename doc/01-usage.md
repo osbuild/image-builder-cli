@@ -96,6 +96,15 @@ $ image-builder list-images --filter type:qcow2 --filter distro:fedora-41
 # ... list ...
 ```
 
+## `image-builder build`
+
+The `build` command builds images of a given [image type](./10-faq.md#image-types), for example:
+
+```console
+$ image-builder build qcow2
+# ... progress ...
+```
+
 # Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
