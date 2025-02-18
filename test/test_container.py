@@ -94,3 +94,31 @@ def test_container_with_progress(tmp_path, build_fake_container, progress, needl
     ], text=True)
     assert needle in output
     assert forbidden not in output
+
+
+def test_container_cross_build_riscv64(tmp_path, build_container):
+    # XXX: we should encode this in images proper
+    # note that we need the "fedora-toolbox" container as the regular one
+    # does not contain python3
+    images_experimental_env = "IMAGE_BUILDER_EXPERIMENTAL=bootstrap=ghcr.io/mvo5/fedora-buildroot:41"
+
+    # XXX: only here speed up builds by sharing downloaded stuff
+    os.makedirs("/var/cache/image-builder/store", exist_ok=True)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    subprocess.check_call([
+        "podman", "run",
+        "--privileged",
+        "-v", "/var/lib/containers/storage:/var/lib/containers/storage",
+        "-v", "/var/cache/image-builder/store:/var/cache/image-builder/store",
+        "-v", f"{output_dir}:/output",
+        f"--env={images_experimental_env}",
+        build_container,
+        "build",
+        "--progress=verbose",
+        "--output-dir=/output",
+        "container",
+        "--distro", "fedora-41",
+        "--arch=riscv64",
+    ], text=True)
+    assert os.path.exists(output_dir / "container/container.tar")
