@@ -6,7 +6,7 @@ go 1.22.8
 
 require (
 	github.com/BurntSushi/toml v1.4.0
-	github.com/cheggaaa/pb/v3 v3.1.6
+	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
 	github.com/osbuild/bootc-image-builder/bib v0.0.0-20250220151022-a00d61b94388
 	github.com/osbuild/images v0.121.1-0.20250304190605-67d46b671862
