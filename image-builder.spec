@@ -90,6 +90,8 @@ GOTAGS="exclude_graphdriver_btrfs"
 %install
 install -m 0755 -vd                                 %{buildroot}%{_bindir}
 install -m 0755 -vp %{gobuilddir}/bin/image-builder %{buildroot}%{_bindir}/
+install -m 0755 -vd                                 %{buildroot}%{_datadir}/image-builder/tools
+install -m 0755 -vp ./tools/run-in-mock             %{buildroot}%{_libexecdir}/image-builder/tools
 
 %check
 export GOFLAGS="-buildmode=pie"
