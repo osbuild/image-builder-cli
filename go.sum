@@ -234,8 +234,8 @@ github.com/opencontainers/selinux v1.11.1 h1:nHFvthhM0qY8/m+vfhJylliSshm8G1jJ2jD
 github.com/opencontainers/selinux v1.11.1/go.mod h1:E5dMC3VPuVvVHDYmi78qvhJp8+M586T4DlDRYpFkyec=
 github.com/osbuild/bootc-image-builder/bib v0.0.0-20250220151022-a00d61b94388 h1:Aft5yg8VLd23dPm3dJcg92+bc3UmxsuSw8WnTm5yGpw=
 github.com/osbuild/bootc-image-builder/bib v0.0.0-20250220151022-a00d61b94388/go.mod h1:mfH19B+cceuQ4PJ6FPsciTtuMFdUiAFHmltgXVg65hg=
-github.com/osbuild/images v0.121.1-0.20250304190605-67d46b671862 h1:6nn3Va7tX2coU4FNIKGeifQx6FP3Jo9jhUUJw/GEOEY=
-github.com/osbuild/images v0.121.1-0.20250304190605-67d46b671862/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
+github.com/osbuild/images v0.123.0 h1:9b2sfl6751dpAEU3wR0bMN1d/bEhbJ39N5a/9ZVCxcg=
+github.com/osbuild/images v0.123.0/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f h1:/UDgs8FGMqwnHagNDPGOlts35QkhAZ8by3DR7nMih7M=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
