@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# taken from https://gist.github.com/jlebon/fb6e7c6dcc3ce17d3e2a86f5938ec033
+# and very lightly tweaked
+set -euo pipefail
+
+# This is a small compatibility script that ensures mock
+# chroots are compatible with applications that expect / to
+# be a mount point, such as bubblewrap.
+
+NEW_ROOT=$(mktemp -d mock-compat-root-XXXXXX)
+
+cleanup() {
+    for mnt in sys proc dev; do
+        umount "$NEW_ROOT"/$mnt
+    done
+    umount "$NEW_ROOT"
+    umount "$NEW_ROOT"
+}
+
+trap cleanup EXIT
+
+# The parent of mount in which we'll chroot can't be shared
+# or pivot_root will barf. So we just remount onto itself,
+# but make sure to make the first parent mount private.
+
+mkdir -p "$NEW_ROOT"
+mount --bind / "$NEW_ROOT"
+mount --make-private "$NEW_ROOT"
+mount --bind "$NEW_ROOT" "$NEW_ROOT"
+for mnt in sys proc dev; do
+    mount --bind /$mnt "$NEW_ROOT"/$mnt
+done
+
+chroot "$NEW_ROOT" "$@"
