@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,18 @@ var (
 // for the given imageType. This can be user overriden via userBasename.
 func basenameFor(img *imagefilter.Result, userBasename string) string {
 	if userBasename != "" {
+		// If the user provided a basename that already has the
+		// image extension just strip that off. I.e. when
+		// we get "foo.qcow2" for a qcow out basename is just
+		// "foo". This is mostly for convenience for our users.
+		//
+		// This code assumes that all our ImgType filesnames have
+		// $name.$ext.$extraExt (e.g. disk.qcow2 or disk.raw.xz)
+		l := strings.SplitN(img.ImgType.Filename(), ".", 2)
+		if len(l) > 1 && l[1] != "" {
+			imgExt := fmt.Sprintf(".%s", l[1])
+			userBasename = strings.TrimSuffix(userBasename, imgExt)
+		}
 		return userBasename
 	}
 	return fmt.Sprintf("%s-%s-%s", img.Distro.Name(), img.ImgType.Name(), img.Arch.Name())
