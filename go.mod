@@ -8,6 +8,7 @@ require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
+	github.com/osbuild/blueprint v0.0.0-20250326072213-45708b085654
 	github.com/osbuild/bootc-image-builder/bib v0.0.0-20250220151022-a00d61b94388
 	github.com/osbuild/images v0.127.0
 	github.com/sirupsen/logrus v1.9.3
@@ -34,6 +35,7 @@ require (
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
 	github.com/containers/ocicrypt v1.2.1 // indirect
 	github.com/containers/storage v1.57.1 // indirect
+	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20231217050601-ba74d44ecf5f // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
