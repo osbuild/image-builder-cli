@@ -10,7 +10,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/osbuild/blueprint v1.1.0
 	github.com/osbuild/bootc-image-builder/bib v0.0.0-20250220151022-a00d61b94388
-	github.com/osbuild/images v0.127.0
+	github.com/osbuild/images v0.131.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
