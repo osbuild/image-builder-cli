@@ -2,6 +2,7 @@ import json
 import os
 import platform
 import subprocess
+import textwrap
 
 import pytest
 
@@ -198,3 +199,50 @@ def test_container_priveleged_user_errors(tmp_path, build_container):
     ], check=False, text=True, capture_output=True)
     assert p.returncode == 1
     assert "error: not enough priviledges: must be root with CAP_SYS_ADMIN" in p.stderr
+
+
+
+@pytest.mark.skipif(os.getuid() == 0, reason="must not run as root")
+def test_container_builds_image_supermin(tmp_path, build_container):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    bp = output_dir / "bp.toml"
+    bp.write_text(textwrap.dedent("""\
+    [[customizations.disk.partitions]]
+    type = "lvm"
+    name = "mainvg"
+    minsize = "20 GiB"
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "datalv"
+    mountpoint = "/data"
+    fs_type = "ext4"
+    minsize = "2 GiB"
+    """))
+
+    os.makedirs("./store", exist_ok=True)
+    subprocess.check_call([
+        "podman", "run", "--rm",
+        # XXX: allow interactive debug
+        "-it",
+        # XXX: or --device ?
+        "-v", "/dev/kvm:/dev/kvm",
+        # map for faster downloads
+        "-v", "./store:/var/cache/image-builder/store",
+        "-v", f"{output_dir}:/output",
+        # needed
+        "--env=IMAGE_BUILDER_EXPERIMENTAL=supermin",
+        build_container,
+        "build",
+        "--blueprint", "/output/bp.toml",
+        # XXX: qcow2 is faster tan minimal raw (xz is slow)
+        "qcow2",
+        "--distro", "centos-9",
+        "--verbose",
+    ])
+    bp.unlink()
+
+    arch = "x86_64"
+    basename = f"centos-9-qcow2-{arch}"
+    assert (output_dir / basename / f"{basename}.qcow2").exists()
+    dents = os.listdir(output_dir)
+    assert len(dents) == 1, f"too many dentries in output dir: {dents}"

@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
@@ -76,6 +77,10 @@ func RunOSBuild(pb ProgressBar, manifest []byte, exports []string, opts *OSBuild
 		return fmt.Errorf("cannot check priviledges: %w", err)
 	}
 	if !enoughPrivs {
+		if experimentalflags.Bool("supermin") {
+			fmt.Fprintf(os.Stderr, "WARNING: using experimental supermin to build\n")
+			return runOSBuildWithSupermin(pb, manifest, exports, opts)
+		}
 		return fmt.Errorf("not enough priviledges: must be root with CAP_SYS_ADMIN")
 	}
 
