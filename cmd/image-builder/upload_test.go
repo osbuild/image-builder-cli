@@ -128,6 +128,7 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	var regionName, bucketName, amiName string
 	var fa fakeAwsUploader
@@ -177,6 +178,7 @@ func TestBuildAmiButNotUpload(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	fa := fakeAwsUploader{
 		uploadAndRegisterErr: fmt.Errorf("upload should not be called"),
