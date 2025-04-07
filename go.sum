@@ -244,6 +244,10 @@ github.com/osbuild/images v0.130.0 h1:nXBj4rpgupF4i1W9NoY4gtmrCTQSC3yaJOkXxBNAvX
 github.com/osbuild/images v0.130.0/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
 github.com/osbuild/images v0.131.0 h1:UbAS2OtJa4iKJYIBE+TRhODGsA4N5hxZLHnevnImLmQ=
 github.com/osbuild/images v0.131.0/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
+github.com/osbuild/images v0.132.0 h1:0QlLw+hymhlao8f3V2Y/Mb15dK4vKBfja0dxxT8zwqA=
+github.com/osbuild/images v0.132.0/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
+github.com/osbuild/images v0.132.1-0.20250407125100-c141eba8280b h1:frZTrxFvMx6Har2r8ZjHS/JkTO3k7a5HTBEYGU9Qh/0=
+github.com/osbuild/images v0.132.1-0.20250407125100-c141eba8280b/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f h1:/UDgs8FGMqwnHagNDPGOlts35QkhAZ8by3DR7nMih7M=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
