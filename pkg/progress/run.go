@@ -34,6 +34,9 @@ type OSBuildOptions struct {
 // enoughPrivsForOsbuild() returns true if the current process does
 // has enough priviledges to run osbuild
 var enoughPrivsForOsbuild = func() (bool, error) {
+	if experimentalflags.Bool("skip-priv-checks") {
+		return true, nil
+	}
 	tmpdir, err := os.MkdirTemp("", "ibcli-priv-check")
 	if err != nil {
 		return false, err
