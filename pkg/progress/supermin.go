@@ -124,7 +124,7 @@ func superminPrepare(prepareDir, export string) error {
 		"osbuild", "osbuild-depsolve-dnf", "osbuild-lvm2", "osbuild-luks2", "osbuild-ostree",
 		// lvm
 		"lvm2",
-		// target"
+		// target dir
 		"-o", prepareDir,
 	)
 	if err != nil {
@@ -151,7 +151,26 @@ func superminBuild(prepareDir, buildDir string) error {
 	return nil
 }
 
-func setupVirtiofsd(tmpDir, outputDir, storeDir string) (func(), error) {
+func waitForFiles(maxWait time.Duration, paths ...string) error {
+	start := time.Now()
+	for {
+		var missingPaths []string
+		for _, path := range paths {
+			if _, err := os.Stat(path); err != nil {
+				missingPaths = append(missingPaths, path)
+			}
+		}
+		if len(missingPaths) == 0 {
+			return nil
+		}
+		if time.Since(start) >= maxWait {
+			return fmt.Errorf("files missing after %v: %v", maxWait, missingPaths)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func setupVirtiofsd(tmpDir, outputDir, storeDir string) (cleanup func(), err error) {
 	var cmds []*exec.Cmd
 	var cleanupFunc = func() {
 		for _, cmd := range cmds {
@@ -160,7 +179,13 @@ func setupVirtiofsd(tmpDir, outputDir, storeDir string) (func(), error) {
 			}
 		}
 	}
+	defer func() {
+		if err != nil {
+			cleanupFunc()
+		}
+	}()
 
+	var socketPaths []string
 	for _, mnt := range []struct {
 		path, tag string
 	}{
@@ -168,6 +193,8 @@ func setupVirtiofsd(tmpDir, outputDir, storeDir string) (func(), error) {
 		{storeDir, "store"},
 	} {
 		socketPath := filepath.Join(tmpDir, fmt.Sprintf("vfsd_%s.sock", mnt.tag))
+		socketPaths = append(socketPaths, socketPath)
+
 		var args []string
 		// run virtiofsd in user namespace if non-root to make
 		// chown() and friends inside the VM work
@@ -193,13 +220,13 @@ func setupVirtiofsd(tmpDir, outputDir, storeDir string) (func(), error) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Start(); err != nil {
-			cleanupFunc()
 			return nil, err
 		}
 		cmds = append(cmds, cmd)
 	}
-	// XXX: wait for socket to appear
-	time.Sleep(2 * time.Second)
+	if err := waitForFiles(10*time.Second, socketPaths...); err != nil {
+		return nil, fmt.Errorf("expected socket did not appear: %w", err)
+	}
 
 	return cleanupFunc, nil
 }

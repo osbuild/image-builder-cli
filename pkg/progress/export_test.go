@@ -13,6 +13,7 @@ type (
 var (
 	NewSyncedWriter       = newSyncedWriter
 	EnoughPrivsForOsbuild = enoughPrivsForOsbuild
+	WaitForFiles          = waitForFiles
 )
 
 func MockOsStdout(w io.Writer) (restore func()) {
