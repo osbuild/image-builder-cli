@@ -7,11 +7,13 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sys/unix"
 
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -28,11 +30,53 @@ type OSBuildOptions struct {
 	CacheMaxSize int64
 }
 
+// enoughPrivsForOsbuild() returns true if the current process does
+// has enough priviledges to run osbuild
+var enoughPrivsForOsbuild = func() (bool, error) {
+	tmpdir, err := os.MkdirTemp("", "ibcli-priv-check")
+	if err != nil {
+		return false, err
+	}
+	defer os.RemoveAll(tmpdir)
+
+	// Do a functional check here as this is the most reliable way
+	// to see if we have enough privileges (checking for CAP_SYS_ADMIN
+	// is not good enough as that is available in a privileged user
+	// container but has not enough privs to create device nodes or
+	// mount filesystems.
+	//
+	// Being able to check for mknod is sufficient, alternatively
+	// we could try to mount ext4 but that is much more involved
+	// as we would need to do the loop device dance and call
+	// mkfs.* which may not be available (or we would just try
+	// syscall.Mount("/any/block-device", "/valid/mnt", 0, "")
+	// and return false if we get EPERM  there.
+	mode := uint32(0600 | unix.S_IFBLK)
+	if err := unix.Mknod(filepath.Join(tmpdir, "test-sda1"), mode, int(unix.Mkdev(8, 1))); err != nil {
+		if errno, ok := err.(syscall.Errno); ok {
+			if errno == syscall.EPERM {
+				return false, nil
+			}
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
 // XXX: merge variant back into images/pkg/osbuild/osbuild-exec.go
 // or into a new pkg/osbuild{,/}run/run.go
 func RunOSBuild(pb ProgressBar, manifest []byte, exports []string, opts *OSBuildOptions) error {
 	if opts == nil {
 		opts = &OSBuildOptions{}
+	}
+
+	enoughPrivs, err := enoughPrivsForOsbuild()
+	if err != nil {
+		return fmt.Errorf("cannot check priviledges: %w", err)
+	}
+	if !enoughPrivs {
+		return fmt.Errorf("not enough priviledges: must be root with CAP_SYS_ADMIN")
 	}
 
 	// To keep maximum compatibility keep the old behavior to run osbuild
