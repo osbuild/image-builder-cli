@@ -71,6 +71,11 @@ func RunOSBuild(pb ProgressBar, manifest []byte, exports []string, opts *OSBuild
 	if opts == nil {
 		opts = &OSBuildOptions{}
 	}
+	if opts.StoreDir != "" {
+		if err := os.MkdirAll(opts.StoreDir, 0755); err != nil {
+			return fmt.Errorf("cannot create store dir: %w", err)
+		}
+	}
 
 	enoughPrivs, err := enoughPrivsForOsbuild()
 	if err != nil {

@@ -233,13 +233,6 @@ func runOSBuildWithSupermin(pbar ProgressBar, manifest []byte, exports []string,
 		return err
 	}
 
-	// XXX: haaaaaaaaaaaaaaaaaaack, we cannot write to the root owned
-	// /var/cache/image-builder otherwise
-	if os.Getuid() != 0 {
-		opts.StoreDir = ".store"
-		os.MkdirAll(".store", 0755)
-	}
-
 	// then we can run osbuild inside supermin
 	if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
 		return err
