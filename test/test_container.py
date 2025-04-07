@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 import platform
 import subprocess
 import textwrap
@@ -12,9 +13,13 @@ import pytest
 def test_container_builds_image(tmp_path, build_container, use_librepo):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
+    cache_dir = pathlib.Path("/var/cache/image-builder/store")
+    cache_dir.mkdir(exist_ok=True, parents=True)
     subprocess.check_call([
         "podman", "run",
         "--privileged",
+        # map for faster downloads
+        "-v", f"{cache_dir}:/var/cache/image-builder/store",
         "-v", f"{output_dir}:/output",
         build_container,
         "build",
@@ -28,6 +33,8 @@ def test_container_builds_image(tmp_path, build_container, use_librepo):
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
+    # smoke test that cache got populated
+    assert len(list(cache_dir.iterdir())) > 0
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
@@ -219,7 +226,8 @@ def test_container_builds_image_supermin(tmp_path, build_container):
     minsize = "2 GiB"
     """))
 
-    os.makedirs("./store", exist_ok=True)
+    cache_home = os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+    cache_dir = pathlib.Path(cache_home) / "image-builder/store"
     subprocess.check_call([
         "podman", "run", "--rm",
         # XXX: allow interactive debug
@@ -227,7 +235,7 @@ def test_container_builds_image_supermin(tmp_path, build_container):
         # XXX: or --device ?
         "-v", "/dev/kvm:/dev/kvm",
         # map for faster downloads
-        "-v", "./store:/var/cache/image-builder/store",
+        "-v", f"{cache_dir}:/var/cache/image-builder/store",
         "-v", f"{output_dir}:/output",
         # needed
         "--env=IMAGE_BUILDER_EXPERIMENTAL=supermin",
@@ -246,3 +254,5 @@ def test_container_builds_image_supermin(tmp_path, build_container):
     assert (output_dir / basename / f"{basename}.qcow2").exists()
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
+    # smoke test that cache got populated
+    assert len(list(cache_dir.iterdir())) > 0

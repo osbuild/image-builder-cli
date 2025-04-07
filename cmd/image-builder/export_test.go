@@ -12,12 +12,13 @@ import (
 )
 
 var (
-	GetOneImage     = getOneImage
-	Run             = run
-	FindDistro      = findDistro
-	DescribeImage   = describeImage
-	ProgressFromCmd = progressFromCmd
-	BasenameFor     = basenameFor
+	GetOneImage                 = getOneImage
+	Run                         = run
+	FindDistro                  = findDistro
+	DescribeImage               = describeImage
+	ProgressFromCmd             = progressFromCmd
+	BasenameFor                 = basenameFor
+	ImageBuilderDefaultCacheDir = imageBuilderDefaultCacheDir
 )
 
 func MockOsArgs(new []string) (restore func()) {
@@ -41,6 +42,14 @@ func MockOsStderr(new io.Writer) (restore func()) {
 	osStderr = new
 	return func() {
 		osStderr = saved
+	}
+}
+
+func MockOsGetuid(new func() int) (restore func()) {
+	saved := osGetuid
+	osGetuid = new
+	return func() {
+		osGetuid = saved
 	}
 }
 

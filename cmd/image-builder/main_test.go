@@ -1058,3 +1058,29 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
 	assert.Contains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
 	assert.Contains(t, fakeStdout.String(), `server_url_123`)
 }
+
+func TestImageBuilderDefaultCacheDir(t *testing.T) {
+	homeDir, err := os.UserHomeDir()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		uid             int
+		xdgCacheHomeEnv string
+		expected        string
+	}{
+		{0, "", "/var/cache/image-builder/store"},
+		{100, "", filepath.Join(homeDir, ".cache/image-builder/store")},
+		{100, "/home/user/my-cache", "/home/user/my-cache/image-builder/store"},
+	} {
+		restore := main.MockOsGetuid(func() int {
+			return tc.uid
+		})
+		defer restore()
+
+		t.Setenv("XDG_CACHE_HOME", tc.xdgCacheHomeEnv)
+
+		cacheDir, err := main.ImageBuilderDefaultCacheDir()
+		assert.NoError(t, err)
+		assert.Equal(t, tc.expected, cacheDir)
+	}
+}
