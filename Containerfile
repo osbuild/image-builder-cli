@@ -16,9 +16,12 @@ FROM registry.fedoraproject.org/fedora:41
 # podman mount needs this
 RUN mkdir -p /etc/containers/networks
 # Fast-track osbuild so we don't depend on the "slow" Fedora release process to implement new features in bib
+# Add kernel, iproute, dhcp-client, etc for rootless builds via supermin
 RUN dnf install -y dnf-plugins-core \
     && dnf copr enable -y @osbuild/osbuild \
-    && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree osbuild-depsolve-dnf osbuild-lvm2 \
+    && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree \
+    osbuild-depsolve-dnf osbuild-lvm2 supermin qemu-kvm qemu-user-static \
+    podman iproute dhcp-client kernel lvm2 rsync virtiofsd \
     && dnf clean all
 
 COPY --from=builder /build/image-builder /usr/bin/
