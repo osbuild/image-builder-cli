@@ -23,6 +23,7 @@ import (
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/manifesttest"
 	"github.com/osbuild/image-builder-cli/internal/testutil"
+	"github.com/osbuild/images/pkg/arch"
 )
 
 func init() {
@@ -703,6 +704,33 @@ func TestDescribeImageSmoke(t *testing.T) {
 	assert.Contains(t, fakeStdout.String(), `distro: centos-9
 type: qcow2
 arch: x86_64`)
+}
+
+func TestDescribeImageMinimal(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockDistroGetHostDistroName(func() (string, error) {
+		return "centos-9", nil
+	})
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"describe",
+		"qcow2",
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`distro: centos-9
+type: qcow2
+arch: %s`, arch.Current().String()))
 }
 
 func TestProgressFromCmd(t *testing.T) {
