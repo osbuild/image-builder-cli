@@ -39,11 +39,13 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 	if err != nil {
 		return err
 	}
+	// ensure we do not leak FDs if the function returns prematurely
 	defer f.Close()
+
 	if _, err := io.Copy(f, content); err != nil {
 		return err
 	}
-	return nil
+	return f.Close()
 }
 
 func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, depsolveWarningsOutput io.Writer, opts *manifestOptions) error {
