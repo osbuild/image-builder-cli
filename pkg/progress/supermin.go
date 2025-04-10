@@ -2,12 +2,16 @@ package progress
 
 import (
 	"archive/tar"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/osbuild/image-builder-cli/pkg/util"
 )
@@ -79,6 +83,8 @@ osbuild \
   --cache /store \
   /output/manifest.json
 
+echo "" > /output/%s
+
 # trigger clean shutdown via sysreq
 echo _suo > /proc/sysrq-trigger
 # shutdown is async so we need to sleep here or PID=0 dies
@@ -106,8 +112,8 @@ func addInitTar(superminDir, superminInitScript string) error {
 	return nil
 }
 
-func superminPrepare(prepareDir, export string) error {
-	superminInitScript := fmt.Sprintf(superminInitScriptFmt, export)
+func superminPrepare(prepareDir, export, doneStampName string) error {
+	superminInitScript := fmt.Sprintf(superminInitScriptFmt, export, doneStampName)
 
 	// prepare supermin
 	err := util.RunCmdSync(
@@ -250,9 +256,22 @@ func runOSBuildWithSupermin(pbar ProgressBar, manifest []byte, exports []string,
 	}
 	defer os.RemoveAll(superminTmp)
 
+	// It is non-trivial to exit qemu non-zero if osbuild fails, so
+	// instead we just generate a build-done "stamp" file in output
+	// and if that is missing we know something went wrong and show
+	// the log. It has to be a random stamp to avoid having to deal
+	// with pre-existing build-stamp files.
+	buildUUID, err := uuid.NewRandom()
+	if err != nil {
+		return fmt.Errorf("cannot create build uuid: %w", err)
+	}
+	doneStampName := fmt.Sprintf("done-%s.stamp", buildUUID)
+	doneStampPath := filepath.Join(opts.OutputDir, doneStampName)
+	defer os.Remove(doneStampPath)
+
 	// we need to prepare and then build supermin
 	prepareDir := filepath.Join(superminTmp, "prepare")
-	if err := superminPrepare(prepareDir, exports[0]); err != nil {
+	if err := superminPrepare(prepareDir, exports[0], doneStampName); err != nil {
 		return err
 	}
 	runDir := filepath.Join(superminTmp, "run")
@@ -277,7 +296,9 @@ func runOSBuildWithSupermin(pbar ProgressBar, manifest []byte, exports []string,
 	}
 	defer cleanup()
 
-	return util.RunCmdSync(
+	var buildLog bytes.Buffer
+	mw := io.MultiWriter(&buildLog, os.Stdout)
+	cmd := exec.Command(
 		"qemu-kvm",
 		"-nodefaults", "-nographic",
 		"-accel", "kvm",
@@ -305,4 +326,13 @@ func runOSBuildWithSupermin(pbar ProgressBar, manifest []byte, exports []string,
 		"-serial", "stdio",
 		"-append", "console=ttyS0 quiet root=/dev/sda",
 	)
+	cmd.Stdout = mw
+	cmd.Stderr = mw
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("running qemu failed: %w", err)
+	}
+	if _, err := os.Stat(doneStampPath); err != nil {
+		return fmt.Errorf("build failed:\n%s", buildLog.String())
+	}
+	return nil
 }
