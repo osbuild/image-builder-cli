@@ -37,7 +37,12 @@ jobs:
       - name: Install cross build dependencies
         run: sudo apt install -y qemu-user-static
 
-      - name: Run integration tests via pytest
+      - name: Run integration tests via pytest (root)
         run: |
           # use "-s" for now for easier debugging
           sudo pytest -s -v
+
+      - name: Run integration tests via pytest (non-root)
+        run: |
+          # use "-s" for now for easier debugging
+          pytest -s -v
