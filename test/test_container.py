@@ -1,7 +1,9 @@
 import json
 import os
+import pathlib
 import platform
 import subprocess
+import textwrap
 
 import pytest
 
@@ -11,9 +13,13 @@ import pytest
 def test_container_builds_image(tmp_path, build_container, use_librepo):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
+    cache_dir = pathlib.Path("/var/cache/image-builder/store")
+    cache_dir.mkdir(exist_ok=True, parents=True)
     subprocess.check_call([
         "podman", "run",
         "--privileged",
+        # map for faster downloads
+        "-v", f"{cache_dir}:/var/cache/image-builder/store",
         "-v", f"{output_dir}:/output",
         build_container,
         "build",
@@ -27,6 +33,8 @@ def test_container_builds_image(tmp_path, build_container, use_librepo):
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
+    # smoke test that cache got populated
+    assert len(list(cache_dir.iterdir())) > 0
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
@@ -156,3 +164,95 @@ def test_container_manifest_seeded_is_the_same(build_container, use_seed_arg):
     else:
         print(cmd)
         assert len(manifests) == 3
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="must be run as root")
+def test_container_unpriveleged_root_errors(tmp_path, build_container):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    os.makedirs("./store", exist_ok=True)
+    p = subprocess.run([
+        "podman", "run", "--rm",
+        # note that --priviledged is missing
+        "-v", f"{output_dir}:/output",
+        build_container,
+        "build",
+        "qcow2",
+        "--distro", "centos-9",
+        "--verbose",
+    ], check=False, text=True, capture_output=True)
+    assert p.returncode == 1
+    assert "error: not enough priviledges: must be root with CAP_SYS_ADMIN" in p.stderr
+
+
+@pytest.mark.skipif(os.getuid() == 0, reason="must be run as user")
+def test_container_priveleged_user_errors(tmp_path, build_container):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    os.makedirs("./store", exist_ok=True)
+    p = subprocess.run([
+        "podman", "run", "--rm",
+        # priviledged but run as user which means inside the container we have
+        # CAP_SYS_ADMIN but only in this NS, i.e. same privs as the calling user
+        "--privileged",
+        "-v", f"{output_dir}:/output",
+        build_container,
+        "build",
+        "qcow2",
+        "--distro", "centos-9",
+        "--verbose",
+    ], check=False, text=True, capture_output=True)
+    assert p.returncode == 1
+    assert "error: not enough priviledges: must be root with CAP_SYS_ADMIN" in p.stderr
+
+
+
+@pytest.mark.skipif(os.getuid() == 0, reason="must not run as root")
+def test_container_builds_image_supermin(tmp_path, build_container):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    bp = output_dir / "bp.toml"
+    bp.write_text(textwrap.dedent("""\
+    [[customizations.disk.partitions]]
+    type = "lvm"
+    name = "mainvg"
+    minsize = "20 GiB"
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "datalv"
+    mountpoint = "/data"
+    fs_type = "ext4"
+    minsize = "2 GiB"
+    """))
+
+    cache_home = os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+    cache_dir = pathlib.Path(cache_home) / "image-builder/store"
+    subprocess.check_call([
+        "podman", "run", "--rm",
+        # XXX: allow interactive debug
+        "-it",
+        # XXX: or --device ?
+        "-v", "/dev/kvm:/dev/kvm",
+        # map for faster downloads
+        "-v", f"{cache_dir}:/var/cache/image-builder/store",
+        "-v", f"{output_dir}:/output",
+        # needed
+        "--env=IMAGE_BUILDER_EXPERIMENTAL=supermin",
+        build_container,
+        "build",
+        "--blueprint", "/output/bp.toml",
+        # XXX: qcow2 is faster tan minimal raw (xz is slow)
+        "qcow2",
+        "--distro", "centos-9",
+        "--verbose",
+    ])
+    bp.unlink()
+
+    arch = "x86_64"
+    basename = f"centos-9-qcow2-{arch}"
+    assert (output_dir / basename / f"{basename}.qcow2").exists()
+    dents = os.listdir(output_dir)
+    assert len(dents) == 1, f"too many dentries in output dir: {dents}"
+    # smoke test that cache got populated
+    assert len(list(cache_dir.iterdir())) > 0

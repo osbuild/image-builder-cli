@@ -159,6 +159,7 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -359,6 +360,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -420,6 +422,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -509,6 +512,7 @@ func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -543,6 +547,7 @@ func TestBuildIntegrationErrorsProgressVerboseWithBuildlog(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -592,6 +597,7 @@ func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -820,6 +826,7 @@ func TestBuildCrossArchSmoke(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -872,6 +879,7 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "skip-priv-checks")
 
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -946,5 +954,31 @@ func TestBasenameFor(t *testing.T) {
 		res, err := main.GetOneImage("centos-9", tc.imgTypeName, "x86_64", nil)
 		require.NoError(t, err)
 		assert.Equal(t, tc.expected, main.BasenameFor(res, tc.basename))
+	}
+}
+
+func TestImageBuilderDefaultCacheDir(t *testing.T) {
+	homeDir, err := os.UserHomeDir()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		uid             int
+		xdgCacheHomeEnv string
+		expected        string
+	}{
+		{0, "", "/var/cache/image-builder/store"},
+		{100, "", filepath.Join(homeDir, ".cache/image-builder/store")},
+		{100, "/home/user/my-cache", "/home/user/my-cache/image-builder/store"},
+	} {
+		restore := main.MockOsGetuid(func() int {
+			return tc.uid
+		})
+		defer restore()
+
+		t.Setenv("XDG_CACHE_HOME", tc.xdgCacheHomeEnv)
+
+		cacheDir, err := main.ImageBuilderDefaultCacheDir()
+		assert.NoError(t, err)
+		assert.Equal(t, tc.expected, cacheDir)
 	}
 }
