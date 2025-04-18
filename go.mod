@@ -3,18 +3,19 @@ module github.com/osbuild/image-builder-cli
 // keep in sync with images,
 // c.f. https://github.com/osbuild/images/blob/main/go.mod
 go 1.22.8
+toolchain go1.24.1
 
 require (
 	github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
-	github.com/osbuild/blueprint v1.5.0
+	github.com/osbuild/blueprint v1.6.0
 	github.com/osbuild/images v0.135.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sys v0.30.0
+	golang.org/x/sys v0.32.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
