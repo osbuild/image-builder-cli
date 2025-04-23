@@ -82,13 +82,15 @@ osbuild \
   --output-directory /output \
   --cache /store \
   /output/manifest.json
+sync
 
 echo "" > /output/%s
 
 # trigger clean shutdown via sysreq
 echo _suo > /proc/sysrq-trigger
 # shutdown is async so we need to sleep here or PID=0 dies
-sleep 999
+sleep 300
+echo "shutdown takes unusually long, please report as a bug"
 `
 
 func addInitTar(superminDir, superminInitScript string) error {
