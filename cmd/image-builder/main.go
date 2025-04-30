@@ -337,7 +337,6 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if errors.Is(err, ErrUploadTypeUnsupported) || errors.Is(err, ErrUploadConfigNotProvided) {
 		err = nil
 	}
-
 	if err != nil {
 		return err
 	}
@@ -406,6 +405,23 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	}
 
 	return describeImage(res, osStdout)
+}
+
+var osGetuid = os.Getuid
+
+func imageBuilderDefaultCacheDir() (string, error) {
+	if osGetuid() == 0 {
+		return "/var/cache/image-builder/store", nil
+	}
+	xdgCacheHome := os.Getenv("XDG_CACHE_HOME")
+	if xdgCacheHome == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		xdgCacheHome = filepath.Join(homeDir, ".cache")
+	}
+	return filepath.Join(xdgCacheHome, "image-builder/store"), nil
 }
 
 func run() error {
@@ -483,6 +499,10 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
 	rootCmd.AddCommand(uploadCmd)
 
+	ibCacheDir, err := imageBuilderDefaultCacheDir()
+	if err != nil {
+		return err
+	}
 	buildCmd := &cobra.Command{
 		Use:          "build <image-type>",
 		Short:        "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
@@ -494,7 +514,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
-	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
+	buildCmd.Flags().String("cache", ibCacheDir, `osbuild directory to cache intermediate build artifacts"`)
 	// XXX: add "--verbose" here, similar to how bib is doing this
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")

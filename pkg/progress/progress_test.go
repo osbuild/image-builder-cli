@@ -16,6 +16,11 @@ import (
 )
 
 func TestProgressNew(t *testing.T) {
+	restore := progress.MockEnoughPrivsForOsbuild(func() (bool, error) {
+		return true, nil
+	})
+	defer restore()
+
 	for _, tc := range []struct {
 		typ         string
 		expected    interface{}
@@ -143,7 +148,12 @@ func makeFakeOsbuild(t *testing.T, content string) string {
 }
 
 func TestRunOSBuildWithProgressErrorReporting(t *testing.T) {
-	restore := progress.MockOsStderr(io.Discard)
+	restore := progress.MockEnoughPrivsForOsbuild(func() (bool, error) {
+		return true, nil
+	})
+	defer restore()
+
+	restore = progress.MockOsStderr(io.Discard)
 	defer restore()
 
 	restore = progress.MockOsbuildCmd(makeFakeOsbuild(t, `
@@ -168,9 +178,14 @@ osbuild-stderr-output
 }
 
 func TestRunOSBuildWithProgressIncorrectJSON(t *testing.T) {
+	restore := progress.MockEnoughPrivsForOsbuild(func() (bool, error) {
+		return true, nil
+	})
+	defer restore()
+
 	signalDeliveredMarkerPath := filepath.Join(t.TempDir(), "sigint-delivered")
 
-	restore := progress.MockOsbuildCmd(makeFakeOsbuild(t, fmt.Sprintf(`
+	restore = progress.MockOsbuildCmd(makeFakeOsbuild(t, fmt.Sprintf(`
 trap 'touch "%s";exit 2' INT
 
 >&3 echo invalid-json
@@ -202,7 +217,12 @@ done
 }
 
 func TestRunOSBuildWithBuildlogTerm(t *testing.T) {
-	restore := progress.MockOsbuildCmd(makeFakeOsbuild(t, `
+	restore := progress.MockEnoughPrivsForOsbuild(func() (bool, error) {
+		return true, nil
+	})
+	defer restore()
+
+	restore = progress.MockOsbuildCmd(makeFakeOsbuild(t, `
 echo osbuild-stdout-output
 >&2 echo osbuild-stderr-output
 
@@ -237,7 +257,11 @@ osbuild-stage-message
 }
 
 func TestRunOSBuildWithBuildlogVerbose(t *testing.T) {
-	restore := progress.MockOsbuildCmd(makeFakeOsbuild(t, `
+	restore := progress.MockEnoughPrivsForOsbuild(func() (bool, error) {
+		return true, nil
+	})
+	defer restore()
+	restore = progress.MockOsbuildCmd(makeFakeOsbuild(t, `
 echo osbuild-stdout-output
 >&2 echo osbuild-stderr-output
 `))
@@ -265,8 +289,13 @@ osbuild-stderr-output
 }
 
 func TestRunOSBuildCacheMaxSize(t *testing.T) {
+	restore := progress.MockEnoughPrivsForOsbuild(func() (bool, error) {
+		return true, nil
+	})
+	defer restore()
+
 	fakeOsbuildBinary := makeFakeOsbuild(t, `echo "$@" > "$0".cmdline`)
-	restore := progress.MockOsbuildCmd(fakeOsbuildBinary)
+	restore = progress.MockOsbuildCmd(fakeOsbuildBinary)
 	defer restore()
 
 	pbar, err := progress.New("debug")

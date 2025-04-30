@@ -11,7 +11,9 @@ type (
 )
 
 var (
-	NewSyncedWriter = newSyncedWriter
+	NewSyncedWriter       = newSyncedWriter
+	EnoughPrivsForOsbuild = enoughPrivsForOsbuild
+	WaitForFiles          = waitForFiles
 )
 
 func MockOsStdout(w io.Writer) (restore func()) {
@@ -43,5 +45,13 @@ func MockOsbuildCmd(s string) (restore func()) {
 	osbuildCmd = s
 	return func() {
 		osbuildCmd = saved
+	}
+}
+
+func MockEnoughPrivsForOsbuild(new func() (bool, error)) (restore func()) {
+	saved := enoughPrivsForOsbuild
+	enoughPrivsForOsbuild = new
+	return func() {
+		enoughPrivsForOsbuild = saved
 	}
 }
