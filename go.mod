@@ -10,7 +10,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
 	github.com/osbuild/blueprint v1.5.0
-	github.com/osbuild/images v0.149.0
+	github.com/osbuild/images v0.153.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sys v0.30.0
