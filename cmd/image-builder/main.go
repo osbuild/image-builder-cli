@@ -423,7 +423,7 @@ image-type and blueprint.
 Image-builder builds operating system images for a range of predefined
 operating systems like Fedora, CentOS and RHEL with easy customizations support.`,
 		SilenceErrors: true,
-		Version:       BuildVersion,
+		Version:       GetVersion(BuildVersion),
 		CompletionOptions: cobra.CompletionOptions{
 			HiddenDefaultCmd: true,
 		},
