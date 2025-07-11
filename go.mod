@@ -11,8 +11,8 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
-	github.com/osbuild/blueprint v1.5.0
-	github.com/osbuild/images v0.156.0
+	github.com/osbuild/blueprint v1.10.0
+	github.com/osbuild/images v0.157.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sys v0.33.0
@@ -51,11 +51,11 @@ require (
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.1 // indirect
-	github.com/go-openapi/jsonpointer v0.21.0 // indirect
+	github.com/go-openapi/jsonpointer v0.21.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/loads v0.22.0 // indirect
 	github.com/go-openapi/runtime v0.28.0 // indirect
@@ -137,3 +137,5 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
+
+replace github.com/osbuild/images => github.com/mvo5/images v0.0.0-20250711125836-3262e9b1b585
