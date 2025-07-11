@@ -2,9 +2,7 @@ module github.com/osbuild/image-builder-cli
 
 // keep in sync with images,
 // c.f. https://github.com/osbuild/images/blob/main/go.mod
-go 1.23.9
-
-toolchain go1.24.4
+go 1.24
 
 require (
 	github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
