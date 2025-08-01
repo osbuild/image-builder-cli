@@ -209,8 +209,8 @@ github.com/opencontainers/selinux v1.12.0 h1:6n5JV4Cf+4y0KNXW48TLj5DwfXpvWlxXplU
 github.com/opencontainers/selinux v1.12.0/go.mod h1:BTPX+bjVbWGXw7ZZWUbdENt8w0htPSrlgOOysQaU62U=
 github.com/osbuild/blueprint v1.10.0 h1:6TG+mSV5kUA3Vq+0fc10MchDilBcDd8SEA8KbDFUn2w=
 github.com/osbuild/blueprint v1.10.0/go.mod h1:uknOfX/bAoi+dbeNJj+uAir1T++/LVEtoY8HO3U7MiQ=
-github.com/osbuild/images v0.167.1-0.20250730141013-c064f98308cd h1:hPcPeGqJUnVc2cPmlRx+00LhOKB9HKgukCZl/+sNGgw=
-github.com/osbuild/images v0.167.1-0.20250730141013-c064f98308cd/go.mod h1:WwKRXlJ7ksVf5jLNpKk2XBRBoX/+/7jrojS2hCm2aDw=
+github.com/osbuild/images v0.168.0 h1:qPmm9d28Py8/TrfzzyCjHAOdcXG4//NbF1EO3I8NanA=
+github.com/osbuild/images v0.168.0/go.mod h1:WwKRXlJ7ksVf5jLNpKk2XBRBoX/+/7jrojS2hCm2aDw=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
