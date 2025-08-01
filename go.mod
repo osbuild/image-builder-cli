@@ -121,5 +121,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/osbuild/images => github.com/osbuild/images v0.167.1-0.20250730141013-c064f98308cd
