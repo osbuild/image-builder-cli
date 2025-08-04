@@ -134,10 +134,7 @@ type cmdManifestWrapperOptions struct {
 	useBootstrapIfNeeded bool
 }
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
-	if wrapperOpts == nil {
-		wrapperOpts = &cmdManifestWrapperOptions{}
-	}
+func cmdGetOneImage(pbar progress.ProgressBar, cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("data-dir")
 	if err != nil {
 		return nil, err
@@ -158,6 +155,56 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		archStr = arch.Current().String()
 	}
 	distroStr, err := cmd.Flags().GetString("distro")
+	if err != nil {
+		return nil, err
+	}
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
+	if err != nil {
+		return nil, err
+	}
+
+	bp, err := blueprintload.Load(blueprintPath)
+	if err != nil {
+		return nil, err
+	}
+
+	distroStr, err = findDistro(distroStr, bp.Distro)
+	if err != nil {
+		return nil, err
+	}
+	imgTypeStr := args[0]
+	pbar.SetPulseMsgf("Manifest generation step")
+	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
+
+	repoOpts := &repoOptions{
+		DataDir:    dataDir,
+		ExtraRepos: extraRepos,
+		ForceRepos: forceRepos,
+	}
+	return getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
+}
+
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
+	if wrapperOpts == nil {
+		wrapperOpts = &cmdManifestWrapperOptions{}
+	}
+	img, err := cmdGetOneImage(pbar, cmd, args)
+	if err != nil {
+		return nil, err
+	}
+	if len(img.ImgType.Exports()) > 1 {
+		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
+	}
+
+	dataDir, err := cmd.Flags().GetString("data-dir")
+	if err != nil {
+		return nil, err
+	}
+	extraRepos, err := cmd.Flags().GetStringArray("extra-repo")
+	if err != nil {
+		return nil, err
+	}
+	forceRepos, err := cmd.Flags().GetStringArray("force-repo")
 	if err != nil {
 		return nil, err
 	}
@@ -205,32 +252,6 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	// "manifest" (if "images" learn to set the output filename in
 	// manifests we would change this
 	outputFilename, _ := cmd.Flags().GetString("output-name")
-
-	bp, err := blueprintload.Load(blueprintPath)
-	if err != nil {
-		return nil, err
-	}
-
-	distroStr, err = findDistro(distroStr, bp.Distro)
-	if err != nil {
-		return nil, err
-	}
-	imgTypeStr := args[0]
-	pbar.SetPulseMsgf("Manifest generation step")
-	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
-
-	repoOpts := &repoOptions{
-		DataDir:    dataDir,
-		ExtraRepos: extraRepos,
-		ForceRepos: forceRepos,
-	}
-	img, err := getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
-	if err != nil {
-		return nil, err
-	}
-	if len(img.ImgType.Exports()) > 1 {
-		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
-	}
 
 	opts := &manifestOptions{
 		OutputDir:      outputDir,
@@ -474,6 +495,17 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	rootCmd.AddCommand(manifestCmd)
+
+	pkgSearchCmd := &cobra.Command{
+		Use:          "pkgsearch <image-type> [pkg1,pkg2]",
+		Short:        "show details for the packages of the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
+		RunE:         cmdPkgSearch,
+		SilenceUsage: true,
+		Args:         cobra.MinimumNArgs(1),
+	}
+	pkgSearchCmd.Flags().String("format", "", "Output in a specific format (json)")
+	pkgSearchCmd.Flags().AddFlagSet(manifestCmd.Flags())
+	rootCmd.AddCommand(pkgSearchCmd)
 
 	uploadCmd := &cobra.Command{
 		Use:          "upload <image-path>",
