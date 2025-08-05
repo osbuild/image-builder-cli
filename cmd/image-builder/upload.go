@@ -65,7 +65,7 @@ func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploade
 	return uploader.Check(pw)
 }
 
-func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch arch.Arch, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	switch typeOrCloud {
 	case "ami", "aws":
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
@@ -75,7 +75,7 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 
 }
 
-func uploaderForCmdAWS(cmd *cobra.Command, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+func uploaderForCmdAWS(cmd *cobra.Command, targetArch arch.Arch, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	amiName, err := cmd.Flags().GetString("aws-ami-name")
 	if err != nil {
 		return nil, err
