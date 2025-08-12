@@ -12,12 +12,12 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
 	github.com/osbuild/blueprint v1.12.0
-	github.com/osbuild/images v0.172.0
+	github.com/osbuild/images v0.173.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sys v0.34.0
+	golang.org/x/sys v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
-	sigs.k8s.io/yaml v1.5.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
