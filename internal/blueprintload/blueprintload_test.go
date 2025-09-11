@@ -27,6 +27,12 @@ var testBlueprintTOML = `
 name = "alice"
 `
 
+var testBlueprintYAML = `
+accounts:
+  users:
+    - name: "alice"
+`
+
 var testBlueprintJSONunknownKeys = `
 {
   "birds": {"name": "robin"}
@@ -66,6 +72,7 @@ func TestBlueprintLoadJSON(t *testing.T) {
 	}{
 		{"bp.json", testBlueprintJSON, expectedBlueprint, ""},
 		{"bp.toml", testBlueprintTOML, expectedBlueprint, ""},
+		{"bp.yaml", testBlueprintYAML, expectedBlueprint, ""},
 		{"bp.toml", "wrong-content", nil, `cannot decode ".*/bp.toml": toml: `},
 		{"bp.json", "wrong-content", nil, `cannot decode ".*/bp.json": invalid `},
 		{"bp", "wrong-content", nil, `unsupported file extension for "/.*/bp"`},

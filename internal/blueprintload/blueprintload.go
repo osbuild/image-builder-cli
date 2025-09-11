@@ -9,6 +9,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	ubpConv "github.com/osbuild/blueprint-schema/pkg/conv"
+	ubpParse "github.com/osbuild/blueprint-schema/pkg/parse"
 	"github.com/osbuild/blueprint/pkg/blueprint"
 )
 
@@ -42,6 +44,21 @@ func decodeJson(r io.Reader, what string) (*blueprint.Blueprint, error) {
 	return &conf, nil
 }
 
+func decodeYaml(r io.Reader, what string) (*blueprint.Blueprint, error) {
+	bpTemp, err := ubpParse.ReadYAML(r)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode %q: %w", what, err)
+	}
+
+	exporter := ubpConv.NewInternalExporter(bpTemp)
+	bp, err := exporter.Export()
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert %q: %w", what, err)
+	}
+
+	return bp, nil
+}
+
 func Load(path string) (*blueprint.Blueprint, error) {
 	var fp io.ReadCloser
 	var err error
@@ -64,7 +81,9 @@ func Load(path string) (*blueprint.Blueprint, error) {
 		return decodeJson(fp, path)
 	case filepath.Ext(path) == ".toml":
 		return decodeToml(fp, path)
+	case filepath.Ext(path) == ".yaml":
+		return decodeYaml(fp, path)
 	default:
-		return nil, fmt.Errorf("unsupported file extension for %q (please use .toml or .json)", path)
+		return nil, fmt.Errorf("unsupported file extension for %q (please use .toml/.json/.yaml)", path)
 	}
 }
