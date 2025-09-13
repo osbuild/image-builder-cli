@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
+	"github.com/osbuild/images/pkg/cloud/libvirt"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -29,6 +30,16 @@ var ErrUploadConfigNotProvided = errors.New("missing all upload configuration")
 var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
 var awscloudNewUploader = awscloud.NewUploader
+var libvirtNewUploader = libvirt.NewUploader
+
+func uploadImageWithoutProgress(uploader cloud.Uploader, imagePath string) error {
+	f, err := os.Open(imagePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return uploader.UploadAndRegister(nil, f, osStderr)
+}
 
 func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	f, err := os.Open(imagePath)
@@ -49,7 +60,7 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	pbar.Start()
 	defer pbar.Finish()
 
-	return uploader.UploadAndRegister(r, osStderr)
+	return uploader.UploadAndRegister(r, f, osStderr)
 }
 
 func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploader) error {
@@ -69,6 +80,8 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 	switch typeOrCloud {
 	case "ami", "aws":
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
+	case "libvirt":
+		return uploaderForLibvirt(cmd, targetArch, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
@@ -129,6 +142,22 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 	return awscloudNewUploader(region, bucketName, amiName, opts)
 }
 
+func uploaderForLibvirt(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+	connection, err := cmd.Flags().GetString("libvirt-connection")
+	if err != nil {
+		return nil, err
+	}
+	pool, err := cmd.Flags().GetString("libvirt-pool")
+	if err != nil {
+		return nil, err
+	}
+	volume, err := cmd.Flags().GetString("libvirt-volume")
+	if err != nil {
+		return nil, err
+	}
+	return libvirtNewUploader(connection, pool, volume)
+}
+
 func detectArchFromImagePath(imagePath string) string {
 	// This detection is currently rather naive, we just look for
 	// the file name and try to infer from that. We could extend
@@ -180,5 +209,10 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return uploadImageWithProgress(uploader, imagePath)
+	if uploader.CanShowProgress() {
+		return uploadImageWithProgress(uploader, imagePath)
+	} else {
+		return uploadImageWithoutProgress(uploader, imagePath)
+	}
+
 }
