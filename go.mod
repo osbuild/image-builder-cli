@@ -138,4 +138,5 @@ require (
 	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	libvirt.org/go/libvirt v1.11006.0 // indirect
 )
