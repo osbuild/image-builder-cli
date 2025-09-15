@@ -122,6 +122,10 @@ Note that both toml and json are supported for the blueprint format.
 See https://osbuild.org/docs/user-guide/blueprint-reference/ for
 the full blueprint reference.
 
+Blueprint in the new YAML format is also supported, an [on-line
+convertor](https://osbuild.org/blueprint-schema/) can be used to convert between
+all three formats. This is an experimental feature.
+
 Then just pass them as an additional argument after the image type:
 ```console
 $ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
