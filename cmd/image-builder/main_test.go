@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild/manifesttest"
 	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
@@ -831,7 +831,7 @@ func TestManifestOverrideRepo(t *testing.T) {
 	})
 	defer restore()
 
-	// XXX: dnfjson is very chatty and puts a bunch of output on stderr
+	// XXX: depsolvednf is very chatty and puts a bunch of output on stderr
 	// we should probably silence this in images as its the job of the
 	// error to catpure this. Use CaptureStdio here to ensure we don't
 	// get noisy and confusing errors when this test runs.
@@ -982,8 +982,8 @@ func TestBasenameFor(t *testing.T) {
 }
 
 // XXX: move into as manifestgen.FakeDepsolve
-func fakeDepsolve(cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]dnfjson.DepsolveResult, error) {
-	depsolvedSets := make(map[string]dnfjson.DepsolveResult)
+func fakeDepsolve(cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
+	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 
 	for name, pkgSetChain := range packageSets {
 		specSet := make([]rpmmd.PackageSpec, 0)
@@ -999,7 +999,7 @@ func fakeDepsolve(cacheDir string, depsolveWarningsOutput io.Writer, packageSets
 				specSet = append(specSet, spec)
 			}
 
-			depsolvedSets[name] = dnfjson.DepsolveResult{
+			depsolvedSets[name] = depsolvednf.DepsolveResult{
 				Packages: specSet,
 				Repos:    pkgSet.Repositories,
 			}
