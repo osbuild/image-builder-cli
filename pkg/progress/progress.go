@@ -11,6 +11,8 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/mattn/go-isatty"
+	"github.com/osbuild/image-builder-cli/pkg/util"
+	"golang.org/x/term"
 )
 
 var (
@@ -144,21 +146,20 @@ func (b *terminalProgressBar) SetProgress(subLevel int, msg string, done int, to
 	return nil
 }
 
-func shorten(msg string) string {
-	msg = strings.Replace(msg, "\n", " ", -1)
-	// XXX: make this smarter
-	if len(msg) > 60 {
-		return msg[:60] + "..."
+func getTerminalWidth() int {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		width = 80
 	}
-	return msg
+	return width
 }
 
 func (b *terminalProgressBar) SetPulseMsgf(msg string, args ...any) {
-	b.spinnerPb.Set("spinnerMsg", shorten(fmt.Sprintf(msg, args...)))
+	b.spinnerPb.Set("spinnerMsg", util.ShortenString(fmt.Sprintf(msg, args...), getTerminalWidth()-10))
 }
 
 func (b *terminalProgressBar) SetMessagef(msg string, args ...any) {
-	b.msgPb.Set("msg", shorten(fmt.Sprintf(msg, args...)))
+	b.msgPb.Set("msg", util.ShortenString(fmt.Sprintf(msg, args...), getTerminalWidth()-10))
 }
 
 func (b *terminalProgressBar) render() {

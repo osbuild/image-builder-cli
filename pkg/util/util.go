@@ -35,3 +35,15 @@ func OutputErr(err error) error {
 	}
 	return err
 }
+
+// ShortenString shortens a string to the specified length, replacing
+// newlines with spaces. If the string is longer than length, it appends
+// a unicode ellipsis character. If length is 0, it returns the unmodified
+// string.
+func ShortenString(msg string, length int) string {
+	msg = strings.ReplaceAll(msg, "\n", " ")
+	if length > 0 && len(msg) > length {
+		return msg[:length-1] + "…"
+	}
+	return msg
+}
