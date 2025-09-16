@@ -25,6 +25,8 @@ type OSBuildOptions struct {
 	BuildLog io.Writer
 
 	CacheMaxSize int64
+
+	Statistics bool
 }
 
 // XXX: merge variant back into images/pkg/osbuild/osbuild-exec.go
@@ -154,6 +156,7 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 	}()
 
 	var tracesMsgs []string
+	var stats osbuildStageStats
 	for {
 		st, err := osbuildStatus.Status()
 		if err != nil {
@@ -192,10 +195,17 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 			tracesMsgs = append(tracesMsgs, st.Trace)
 			fmt.Fprintln(buildLog, st.Trace)
 		}
+
+		// accumulate stats
+		stats.Add(st)
 	}
 
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("error running osbuild: %w\nBuildLog:\n%s\nOutput:\n%s", err, strings.Join(tracesMsgs, "\n"), stdio.String())
+	}
+
+	if opts.Statistics {
+		pb.Write(stats.Bytes())
 	}
 
 	return nil

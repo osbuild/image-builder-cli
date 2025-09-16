@@ -17,6 +17,7 @@ type buildOptions struct {
 
 	WriteManifest bool
 	WriteBuildlog bool
+	Statistics    bool
 }
 
 func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManifest []byte, opts *buildOptions) (string, error) {
@@ -36,8 +37,9 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 	}
 
 	osbuildOpts := &progress.OSBuildOptions{
-		StoreDir:  opts.StoreDir,
-		OutputDir: opts.OutputDir,
+		StoreDir:   opts.StoreDir,
+		OutputDir:  opts.OutputDir,
+		Statistics: opts.Statistics,
 	}
 	if opts.WriteBuildlog {
 		if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {

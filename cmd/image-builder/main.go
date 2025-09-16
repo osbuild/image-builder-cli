@@ -354,6 +354,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	withStatistics, err := cmd.Flags().GetBool("with-statistics")
+	if err != nil {
+		return err
+	}
 	// XXX: check env here, i.e. if user is root and osbuild is installed
 
 	pbar, err := progressFromCmd(cmd)
@@ -405,6 +409,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		StoreDir:       cacheDir,
 		WriteManifest:  withManifest,
 		WriteBuildlog:  withBuildlog,
+		Statistics:     withStatistics,
 	}
 	pbar.SetPulseMsgf("Image building step")
 	imagePath, err := buildImage(pbar, res, mf.Bytes(), buildOpts)
@@ -547,6 +552,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	// XXX: add "--verbose" here, similar to how bib is doing this
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
+	buildCmd.Flags().Bool("with-statistics", false, `print statistics at the end of the build`)
 	buildCmd.Flags().String("output-name", "", "set specific output basename")
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
