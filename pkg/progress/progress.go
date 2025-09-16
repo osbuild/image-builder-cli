@@ -1,12 +1,14 @@
 package progress
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -71,6 +73,11 @@ type ProgressBar interface {
 	// Stop will stop rendering the progress information, the
 	// screen is not cleared, the last few lines will be visible
 	Stop()
+
+	// Write implements io.Writer that is used to capture output
+	// that is written after the progress bar is stopped via
+	// Stop().
+	Write(p []byte) (n int, err error)
 }
 
 var isattyIsTerminal = isatty.IsTerminal
@@ -103,7 +110,9 @@ type terminalProgressBar struct {
 
 	shutdownCh chan bool
 
-	out io.Writer
+	out   io.Writer
+	buf   bytes.Buffer
+	bufMu sync.Mutex
 }
 
 // NewTerminalProgressBar creates a new default pb3 based progressbar suitable for
@@ -221,6 +230,13 @@ func (b *terminalProgressBar) Err() error {
 	return errors.Join(errs...)
 }
 
+func (b *terminalProgressBar) Write(p []byte) (n int, err error) {
+	b.bufMu.Lock()
+	defer b.bufMu.Unlock()
+
+	return b.buf.Write(p)
+}
+
 func (b *terminalProgressBar) Stop() {
 	if b.shutdownCh == nil {
 		return
@@ -243,6 +259,13 @@ func (b *terminalProgressBar) Stop() {
 	// running
 	if err := b.Err(); err != nil {
 		fmt.Fprintf(b.out, "error from pb.ProgressBar: %v", err)
+	}
+	// write any buffered output
+	if b.buf.Len() > 0 {
+		b.bufMu.Lock()
+		defer b.bufMu.Unlock()
+		fmt.Fprintf(b.out, "%s%s", ERASE_LINE, b.buf.String())
+		b.buf.Reset()
 	}
 }
 
@@ -268,6 +291,10 @@ func (b *verboseProgressBar) SetMessagef(msg string, args ...any) {
 }
 
 func (b *verboseProgressBar) Start() {
+}
+
+func (b *verboseProgressBar) Write(p []byte) (n int, err error) {
+	return b.w.Write(p)
 }
 
 func (b *verboseProgressBar) Stop() {
@@ -304,6 +331,13 @@ func (b *debugProgressBar) SetMessagef(msg string, args ...any) {
 
 func (b *debugProgressBar) Start() {
 	fmt.Fprintf(b.w, "Start progressbar\n")
+}
+
+func (b *debugProgressBar) Write(p []byte) (n int, err error) {
+	fmt.Fprintf(b.w, "write: ")
+	n, err = b.w.Write(p)
+	fmt.Fprintf(b.w, "\n")
+	return
 }
 
 func (b *debugProgressBar) Stop() {
