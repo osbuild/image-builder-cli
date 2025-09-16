@@ -56,12 +56,12 @@ type ProgressBar interface {
 	// "Image generation step". We could map this to a three-level
 	// progress as well but we spend 90% of the time in the
 	// "Image generation step" so the UI looks a bit odd.
-	SetPulseMsgf(fmt string, args ...interface{})
+	SetPulseMsgf(fmt string, args ...any)
 
 	// A high level message with the last operation status.
 	// For us this usually comes from the stages and has information
 	// like "Starting module org.osbuild.selinux"
-	SetMessagef(fmt string, args ...interface{})
+	SetMessagef(fmt string, args ...any)
 
 	// Start will start rendering the progress information
 	Start()
@@ -153,11 +153,11 @@ func shorten(msg string) string {
 	return msg
 }
 
-func (b *terminalProgressBar) SetPulseMsgf(msg string, args ...interface{}) {
+func (b *terminalProgressBar) SetPulseMsgf(msg string, args ...any) {
 	b.spinnerPb.Set("spinnerMsg", shorten(fmt.Sprintf(msg, args...)))
 }
 
-func (b *terminalProgressBar) SetMessagef(msg string, args ...interface{}) {
+func (b *terminalProgressBar) SetMessagef(msg string, args ...any) {
 	b.msgPb.Set("msg", shorten(fmt.Sprintf(msg, args...)))
 }
 
@@ -256,12 +256,12 @@ func NewVerboseProgressBar() (ProgressBar, error) {
 	return b, nil
 }
 
-func (b *verboseProgressBar) SetPulseMsgf(msg string, args ...interface{}) {
+func (b *verboseProgressBar) SetPulseMsgf(msg string, args ...any) {
 	fmt.Fprintf(b.w, msg, args...)
 	fmt.Fprintf(b.w, "\n")
 }
 
-func (b *verboseProgressBar) SetMessagef(msg string, args ...interface{}) {
+func (b *verboseProgressBar) SetMessagef(msg string, args ...any) {
 	fmt.Fprintf(b.w, msg, args...)
 	fmt.Fprintf(b.w, "\n")
 }
@@ -289,13 +289,13 @@ func NewDebugProgressBar() (ProgressBar, error) {
 	return b, nil
 }
 
-func (b *debugProgressBar) SetPulseMsgf(msg string, args ...interface{}) {
+func (b *debugProgressBar) SetPulseMsgf(msg string, args ...any) {
 	fmt.Fprintf(b.w, "pulse: ")
 	fmt.Fprintf(b.w, msg, args...)
 	fmt.Fprintf(b.w, "\n")
 }
 
-func (b *debugProgressBar) SetMessagef(msg string, args ...interface{}) {
+func (b *debugProgressBar) SetMessagef(msg string, args ...any) {
 	fmt.Fprintf(b.w, "msg: ")
 	fmt.Fprintf(b.w, msg, args...)
 	fmt.Fprintf(b.w, "\n")
