@@ -196,3 +196,35 @@ def test_container_builds_bootc(tmp_path, build_container):
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
+
+
+def test_container_has_expected_images_centos(build_container):
+    """
+    Ensure that image types that are built in by CentOS are available
+    and do not disappear from the list. See:
+    https://gitlab.com/redhat/centos-stream/release-engineering/releng-tools/-/blob/master/scripts/images-build-gen2.py
+    """
+
+    output = subprocess.check_output([
+        "podman", "run",
+        "--privileged",
+        build_container,
+        "list",
+    ], text=True)
+
+
+    type_arch = {
+        "tar": ["aarch64", "x86_64", "ppc64le", "s390x"],
+        "qcow2": ["aarch64", "x86_64", "ppc64le", "s390x"],
+        "ec2": ["x86_64", "aarch64"],
+        "azure": ["x86_64", "aarch64"],
+        "wsl": ["x86_64", "aarch64"],
+        "vagrant-libvirt": ["x86_64"],
+        "vagrant-virtualbox": ["x86_64"],
+        "image-installer": ["x86_64", "aarch64"],
+    }
+
+    for distro in ["centos-9", "centos-10"]:
+        for type_, arches in type_arch.items():
+            for arch in arches:
+                assert f"{distro} type:{type_} arch:{arch}" in output
