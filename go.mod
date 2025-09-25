@@ -2,7 +2,7 @@ module github.com/osbuild/image-builder-cli
 
 // keep in sync with images,
 // c.f. https://github.com/osbuild/images/blob/main/go.mod
-go 1.23.9
+go 1.24.0
 
 toolchain go1.24.4
 
@@ -12,12 +12,12 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
 	github.com/osbuild/blueprint v1.13.0
-	github.com/osbuild/images v0.195.0
-	github.com/spf13/cobra v1.9.1
+	github.com/osbuild/images v0.196.0
+	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sys v0.35.0
+	golang.org/x/sys v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
-	sigs.k8s.io/yaml v1.5.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
@@ -112,7 +112,7 @@ require (
 	github.com/sigstore/sigstore v1.9.5 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smallstep/pkcs7 v0.1.1 // indirect
-	github.com/spf13/pflag v1.0.7 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
 	github.com/sylabs/sif/v2 v2.21.1 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.3 // indirect
