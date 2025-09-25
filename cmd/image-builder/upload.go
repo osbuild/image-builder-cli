@@ -97,6 +97,10 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 	if err != nil {
 		return nil, err
 	}
+	tags, err := cmd.Flags().GetStringArray("aws-tag")
+	if err != nil {
+		return nil, err
+	}
 	if bootMode == nil {
 		// If unset, default to BOOT_HYBIRD which translated
 		// to "uefi-prefered" when registering the image.
@@ -135,7 +139,7 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 		BootMode:   bootMode,
 	}
 
-	return awscloudNewUploader(region, bucketName, amiName, opts)
+	return awscloudNewUploader(region, bucketName, amiName, tags, opts)
 }
 
 func uploaderForLibvirt(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode) (cloud.Uploader, error) {
