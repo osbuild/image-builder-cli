@@ -271,3 +271,28 @@ def test_container_has_expected_images_fedora(build_container):
         for type_, arches in type_arch.items():
             for arch in arches:
                 assert f"{distro} type:{type_} arch:{arch}" in output
+
+
+@pytest.mark.parametrize("bootc_ref,defaultfs", [
+    ("quay.io/fedora/fedora-bootc:42", "ext4"),
+    ("quay.io/centos-bootc/centos-bootc:stream10", ""),
+    ("quay.io/centos-bootc/centos-bootc:stream9", ""),
+])
+def test_container_manifest_bootc_smoke(build_container, bootc_ref, defaultfs):
+    subprocess.check_call(["podman", "pull", bootc_ref])
+    bootc_default_fs = []
+    if defaultfs:
+        bootc_default_fs = ["--bootc-default-fs", defaultfs]
+    output = subprocess.check_output(podman_run + [
+        build_container,
+        "manifest",
+        "qcow2",
+        "--bootc-ref", bootc_ref,
+    ] + bootc_default_fs, text=True)
+    manifest = json.loads(output)
+    assert manifest["version"] == "2"
+    if defaultfs:
+        pipeline = [p for p in manifest["pipelines"] if p["name"] == "image"][0]
+        mkfs_stages = [st for st in pipeline["stages"]
+                       if st["type"] == f"org.osbuild.mkfs.{defaultfs}"]
+        assert mkfs_stages
