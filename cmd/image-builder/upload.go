@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
+	"github.com/osbuild/images/pkg/cloud/libvirt"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -29,6 +30,7 @@ var ErrUploadConfigNotProvided = errors.New("missing all upload configuration")
 var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
 var awscloudNewUploader = awscloud.NewUploader
+var libvirtNewUploader = libvirt.NewUploader
 
 func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	f, err := os.Open(imagePath)
@@ -42,6 +44,7 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	if err != nil {
 		return fmt.Errorf("cannot stat upload: %v", err)
 	}
+	size := uint64(st.Size())
 	pbar := pb.New64(st.Size())
 	pbar.Set(pb.Bytes, true)
 	pbar.SetWriter(osStdout)
@@ -49,7 +52,11 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	pbar.Start()
 	defer pbar.Finish()
 
-	return uploader.UploadAndRegister(r, osStderr)
+	if err := uploader.UploadAndRegister(r, size, osStderr); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploader) error {
@@ -69,6 +76,8 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 	switch typeOrCloud {
 	case "ami", "server-ami", "aws":
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
+	case "libvirt":
+		return uploaderForLibvirt(cmd, targetArch, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
@@ -85,6 +94,10 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 		return nil, err
 	}
 	region, err := cmd.Flags().GetString("aws-region")
+	if err != nil {
+		return nil, err
+	}
+	tags, err := cmd.Flags().GetStringArray("aws-tag")
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +139,23 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 		BootMode:   bootMode,
 	}
 
-	return awscloudNewUploader(region, bucketName, amiName, opts)
+	return awscloudNewUploader(region, bucketName, amiName, tags, opts)
+}
+
+func uploaderForLibvirt(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+	connection, err := cmd.Flags().GetString("libvirt-connection")
+	if err != nil {
+		return nil, err
+	}
+	pool, err := cmd.Flags().GetString("libvirt-pool")
+	if err != nil {
+		return nil, err
+	}
+	volume, err := cmd.Flags().GetString("libvirt-volume")
+	if err != nil {
+		return nil, err
+	}
+	return libvirtNewUploader(connection, pool, volume)
 }
 
 func detectArchFromImagePath(imagePath string) string {
