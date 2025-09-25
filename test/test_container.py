@@ -2,6 +2,8 @@ import json
 import os
 import platform
 import subprocess
+import shlex
+from dataclasses import dataclass
 
 import pytest
 import yaml
@@ -76,16 +78,28 @@ def test_container_build_generates_manifest(tmp_path, build_container):
     assert image_manifest_path.exists()
 
 
-@pytest.mark.parametrize("progress,needle,forbidden", [
-    ("verbose", "osbuild-stdout-output", "[|]"),
-    ("term", "[|]", "osbuild-stdout-output"),
+@dataclass
+class ProgressTestCase:
+    """Test case for progress output tests."""
+    progress: str
+    pty: bool
+    needle: str
+    forbidden: str
+
+
+@pytest.mark.parametrize("case", [
+    ProgressTestCase("verbose", True, "osbuild-stdout-output", "[|]"),
+    ProgressTestCase("term", True, "[|]", "osbuild-stdout-output"),
+    ProgressTestCase("verbose", False, "osbuild-stdout-output", "[|]"),
+    ProgressTestCase("term", False, "[|]", "osbuild-stdout-output"),
 ])
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
-def test_container_with_progress(tmp_path, build_fake_container, progress, needle, forbidden):
+def test_container_with_progress(tmp_path, build_fake_container, case: ProgressTestCase):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    output = subprocess.check_output([
-        "podman", "run", "-t",
+
+    podman_command = [
+        "podman", "run", "-t" if case.pty else "-i",
         "--privileged",
         "-v", f"{output_dir}:/output",
         build_fake_container,
@@ -93,10 +107,31 @@ def test_container_with_progress(tmp_path, build_fake_container, progress, needl
         "qcow2",
         "--distro", "centos-9",
         "--output-dir=.",
-        f"--progress={progress}",
-    ], text=True)
-    assert needle in output
-    assert forbidden not in output
+        f"--progress={case.progress}",
+    ]
+
+    cast_filename = f"recording-{case.progress}.cast.json"
+    asciinema_command = [
+        "asciinema", "rec",
+        "--quiet",
+        "--overwrite",
+        "--cols=80", "--rows=25",
+        "--command", shlex.join(podman_command),
+        cast_filename,
+    ]
+
+    if case.pty:
+        result = subprocess.run(asciinema_command, text=True, check=False)
+    else:
+        result = subprocess.run(podman_command, text=True, check=False)
+    assert result.returncode == 0, f"Podman with asciinema failed:\nSTDERR:\n{result.stderr}"
+
+    assert os.path.exists(cast_filename)
+    with open(cast_filename, "r", encoding="utf-8") as f:
+        cast_text = f.read()
+
+    assert case.needle in cast_text
+    assert case.forbidden not in cast_text
 
 
 # only test a subset here to avoid overly long runtimes
