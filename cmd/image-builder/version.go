@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"os/exec"
 	"runtime/debug"
 	"strings"
 
@@ -16,10 +19,13 @@ type versionDescription struct {
 		Version      string `yaml:"version"`
 		Commit       string `yaml:"commit"`
 		Dependencies struct {
-			Images string `yaml:"images"`
+			Images  string `yaml:"images"`
+			OSBuild string `yaml:"osbuild"`
 		} `yaml:"dependencies"`
 	} `yaml:"image-builder"`
 }
+
+var osbuildCmd = "osbuild"
 
 func readVersionInfo() *versionDescription {
 	vd := &versionDescription{}
@@ -30,6 +36,7 @@ func readVersionInfo() *versionDescription {
 	vd.ImageBuilder.Commit = "unknown"
 	vd.ImageBuilder.Version = "unknown"
 	vd.ImageBuilder.Dependencies.Images = "unknown"
+	vd.ImageBuilder.Dependencies.OSBuild = "unknown"
 
 	if bi, ok := debug.ReadBuildInfo(); ok {
 		for _, bs := range bi.Settings {
@@ -45,6 +52,14 @@ func readVersionInfo() *versionDescription {
 			}
 		}
 	}
+
+	cmd := exec.Command(osbuildCmd, "--version")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		vd.ImageBuilder.Dependencies.OSBuild = fmt.Sprintf("error: %s", err)
+	}
+	vd.ImageBuilder.Dependencies.OSBuild = strings.TrimSpace(out.String())
 
 	return vd
 }
