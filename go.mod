@@ -140,3 +140,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	libvirt.org/go/libvirt v1.11006.0 // indirect
 )
+
+replace github.com/osbuild/images => github.com/thozza/osbuild-images v0.0.0-20250929123503-c211c4845840
