@@ -542,6 +542,9 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("libvirt-connection", "", "connection URI (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-pool", "", "pool name (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-volume", "", "volume name (only for type=libvirt)")
+	uploadCmd.Flags().String("openstack-image", "", "TODO (only for type=openstack)")
+	uploadCmd.Flags().String("openstack-disk-format", "raw", "TODO (only for type=openstack)")
+	uploadCmd.Flags().String("openstack-container-format", "bare", "TODO (only for type=openstack)")
 	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
 	rootCmd.AddCommand(uploadCmd)
 
