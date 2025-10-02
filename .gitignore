@@ -12,3 +12,4 @@ __pycache__
 *.tar.gz
 *.tar.xz
 *.tar.bz2
+/image-builder
