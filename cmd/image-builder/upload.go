@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
+	"github.com/osbuild/images/pkg/cloud/ibmcloud"
 	"github.com/osbuild/images/pkg/cloud/libvirt"
 	"github.com/osbuild/images/pkg/platform"
 )
@@ -31,6 +32,7 @@ var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
 var awscloudNewUploader = awscloud.NewUploader
 var libvirtNewUploader = libvirt.NewUploader
+var ibmNewUploader = ibmcloud.NewUploader
 
 func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	f, err := os.Open(imagePath)
@@ -74,6 +76,8 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
 	case "libvirt":
 		return uploaderForLibvirt(cmd, targetArch, bootMode)
+	case "ibmcloud":
+		return uploaderForCmdIbmCloud(cmd, targetArch, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
@@ -148,6 +152,35 @@ func uploaderForLibvirt(cmd *cobra.Command, targetArchStr string, bootMode *plat
 		return nil, err
 	}
 	return libvirtNewUploader(connection, pool, volume)
+}
+
+func uploaderForCmdIbmCloud(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+	bucketName, err := cmd.Flags().GetString("ibmcloud-bucket")
+	if err != nil {
+		return nil, err
+	}
+	region, err := cmd.Flags().GetString("ibmcloud-region")
+	if err != nil {
+		return nil, err
+	}
+	imageName, err := cmd.Flags().GetString("ibmcloud-image-name")
+	if err != nil {
+		return nil, err
+	}
+	apiKey := os.Getenv("IBMCLOUD_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("Please set your IBM Cloud API key as $IBMCLOUD_API_KEY")
+	}
+	crn := os.Getenv("IBMCLOUD_CRN")
+	if crn == "" {
+		return nil, fmt.Errorf("Please set your IBM Cloud Resource Name as $IBMCLOUD_CRN")
+	}
+	credentials := &ibmcloud.Credentials{
+		AuthEndpoint: "https://iam.cloud.ibm.com/identity/token",
+		ApiKey:       apiKey,
+		Crn:          crn,
+	}
+	return ibmNewUploader(region, bucketName, imageName, credentials)
 }
 
 func detectArchFromImagePath(imagePath string) string {
