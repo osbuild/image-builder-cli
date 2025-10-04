@@ -542,6 +542,9 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("libvirt-connection", "", "connection URI (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-pool", "", "pool name (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-volume", "", "volume name (only for type=libvirt)")
+	uploadCmd.Flags().String("ibmcloud-bucket", "", "target bucket name for storing the image (only for type=ibmcloud)")
+	uploadCmd.Flags().String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for type=ibmcloud)")
+	uploadCmd.Flags().String("ibmcloud-image-name", "", "name for the uploaded image (only for type=ibmcloud)")
 	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
 	rootCmd.AddCommand(uploadCmd)
 
