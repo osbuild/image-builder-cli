@@ -27,9 +27,6 @@ var (
 // Used for testing, this must be a function (instead of the usual
 // "var osStderr = os.Stderr" so that higher level libraries can test
 // this code by replacing "os.Stderr", e.g. testutil.CaptureStdio()
-var osStdout = func() io.Writer {
-	return os.Stdout
-}
 var osStderr = func() io.Writer {
 	return os.Stderr
 }

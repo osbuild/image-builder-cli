@@ -1,5 +1,4 @@
 package progress_test
-
 import (
 	"bytes"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
+	"github.com/osbuild/images/pkg/osbuild"
 )
 
 func makeFakeOsbuild(t *testing.T, content string) string {
@@ -22,10 +22,7 @@ func makeFakeOsbuild(t *testing.T, content string) string {
 }
 
 func TestRunOSBuildWithProgressErrorReporting(t *testing.T) {
-	restore := progress.MockOsStderr(io.Discard)
-	defer restore()
-
-	restore = progress.MockOsbuildCmd(makeFakeOsbuild(t, `
+	restore := progress.MockOsbuildCmd(makeFakeOsbuild(t, `
 >&3 echo '{"message": "osbuild-stage-message"}'
 
 echo osbuild-stdout-output
@@ -34,9 +31,13 @@ exit 112
 `))
 	defer restore()
 
+	opts := &osbuild.OSBuildOptions{
+		Stderr: io.Discard,
+	}
+
 	pbar, err := progress.New("debug")
 	assert.NoError(t, err)
-	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, nil)
+	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, opts)
 	assert.EqualError(t, err, `error running osbuild: exit status 112
 BuildLog:
 osbuild-stage-message
@@ -93,20 +94,14 @@ sleep 0.1
 `))
 	defer restore()
 
-	var fakeStdout, fakeStderr bytes.Buffer
-	restore = progress.MockOsStdout(&fakeStdout)
-	defer restore()
-	restore = progress.MockOsStderr(&fakeStderr)
-	defer restore()
-
 	pbar, err := progress.New("term")
 	assert.NoError(t, err)
 
-	var buildLog bytes.Buffer
-	opts := &progress.OSBuildOptions{
+	var buildLog, stdout bytes.Buffer
+	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, &osbuild.OSBuildOptions{
+		Stdout:  &stdout,
 		BuildLog: &buildLog,
-	}
-	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, opts)
+	})
 	assert.NoError(t, err)
 	expectedOutput := `osbuild-stdout-output
 osbuild-stderr-output
@@ -122,20 +117,14 @@ echo osbuild-stdout-output
 `))
 	defer restore()
 
-	var fakeStdout, fakeStderr bytes.Buffer
-	restore = progress.MockOsStdout(&fakeStdout)
-	defer restore()
-	restore = progress.MockOsStderr(&fakeStderr)
-	defer restore()
-
 	pbar, err := progress.New("verbose")
 	assert.NoError(t, err)
 
-	var buildLog bytes.Buffer
-	opts := &progress.OSBuildOptions{
+	var buildLog, stdout bytes.Buffer
+	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, &osbuild.OSBuildOptions{
+		Stdout:   &stdout,
 		BuildLog: &buildLog,
-	}
-	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, opts)
+	})
 	assert.NoError(t, err)
 	expectedOutput := `osbuild-stdout-output
 osbuild-stderr-output
@@ -151,7 +140,7 @@ func TestRunOSBuildCacheMaxSize(t *testing.T) {
 	pbar, err := progress.New("debug")
 	assert.NoError(t, err)
 
-	osbuildOpts := &progress.OSBuildOptions{
+	osbuildOpts := &osbuild.OSBuildOptions{
 		CacheMaxSize: 77,
 	}
 	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, osbuildOpts)

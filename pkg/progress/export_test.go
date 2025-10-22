@@ -2,6 +2,8 @@ package progress
 
 import (
 	"io"
+
+	"github.com/osbuild/images/pkg/osbuild"
 )
 
 type (
@@ -11,16 +13,8 @@ type (
 )
 
 var (
-	NewSyncedWriter = newSyncedWriter
+	OSStderr        = osStderr
 )
-
-func MockOsStdout(w io.Writer) (restore func()) {
-	saved := osStdout
-	osStdout = func() io.Writer { return w }
-	return func() {
-		osStdout = saved
-	}
-}
 
 func MockOsStderr(w io.Writer) (restore func()) {
 	saved := osStderr
@@ -39,9 +33,9 @@ func MockIsattyIsTerminal(fn func(uintptr) bool) (restore func()) {
 }
 
 func MockOsbuildCmd(s string) (restore func()) {
-	saved := osbuildCmd
-	osbuildCmd = s
+	saved := osbuild.OSBuildCmd
+	osbuild.OSBuildCmd = s
 	return func() {
-		osbuildCmd = saved
+		osbuild.OSBuildCmd = saved
 	}
 }

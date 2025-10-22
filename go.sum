@@ -90,6 +90,8 @@ github.com/containers/storage v1.59.1/go.mod h1:KoAYHnAjP3/cTsRS+mmWZGkufSY2GACi
 github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr4=
 github.com/coreos/go-semver v0.3.1/go.mod h1:irMmmIw/7yzSRPWryHsK7EYSg09caPQL03VsM8rvUec=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
+github.com/croissanne/images v0.0.0-20251023114920-81eefc443b5e h1:MuftBLwWLE8gWoJY1/P26tw0TL9HIkb4LcoTepZjVyY=
+github.com/croissanne/images v0.0.0-20251023114920-81eefc443b5e/go.mod h1:tZqcrs3eNUA0VPs1h3YCnbnpAskVVfo36CIi2USSfDs=
 github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467 h1:uX1JmpONuD549D73r6cgnxyUu18Zb7yHAy5AYU0Pm4Q=
 github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467/go.mod h1:uzvlm1mxhHkdfqitSA92i7Se+S9ksOn3a3qmv/kyOCw=
 github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
@@ -245,10 +247,6 @@ github.com/opencontainers/selinux v1.12.0 h1:6n5JV4Cf+4y0KNXW48TLj5DwfXpvWlxXplU
 github.com/opencontainers/selinux v1.12.0/go.mod h1:BTPX+bjVbWGXw7ZZWUbdENt8w0htPSrlgOOysQaU62U=
 github.com/osbuild/blueprint v1.16.0 h1:f/kHih+xpeJ1v7wtIfzdHPZTsiXsqKeDQ1+rrue6298=
 github.com/osbuild/blueprint v1.16.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
-github.com/osbuild/images v0.206.0 h1:F9G6dnqrURRUcWE2eWIPQLzHutSCT0OyWMcITK28uCQ=
-github.com/osbuild/images v0.206.0/go.mod h1:iF6bTLzBtyp9l27fexsD5AzwHEn9+bXF5Jr4HHQecmI=
-github.com/osbuild/images v0.209.0 h1:9BRf+N0op1WbQkc+7zVRBZxg4dqS4lty3i2stF3G9lo=
-github.com/osbuild/images v0.209.0/go.mod h1:tZqcrs3eNUA0VPs1h3YCnbnpAskVVfo36CIi2USSfDs=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

@@ -141,3 +141,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	libvirt.org/go/libvirt v1.11006.0 // indirect
 )
+
+replace github.com/osbuild/images => github.com/croissanne/images v0.0.0-20251023114920-81eefc443b5e
