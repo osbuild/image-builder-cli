@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/osbuild"
 )
 
 type buildOptions struct {
@@ -35,10 +37,11 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		}
 	}
 
-	osbuildOpts := &progress.OSBuildOptions{
+	osbuildOpts := &osbuild.OSBuildOptions{
 		StoreDir:  opts.StoreDir,
 		OutputDir: opts.OutputDir,
 	}
+	var buildLog io.Writer
 	if opts.WriteBuildlog {
 		if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
 			return "", fmt.Errorf("cannot create buildlog base directory: %w", err)
@@ -50,9 +53,9 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		}
 		defer f.Close()
 
-		osbuildOpts.BuildLog = f
+		buildLog = f
 	}
-	if err := progress.RunOSBuild(pbar, osbuildManifest, res.ImgType.Exports(), osbuildOpts); err != nil {
+	if err := progress.RunOSBuild(pbar, buildLog, osbuildManifest, res.ImgType.Exports(), osbuildOpts); err != nil {
 		return "", err
 	}
 	// Rename *sigh*, see https://github.com/osbuild/images/pull/1039

@@ -7,30 +7,17 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
 	"syscall"
 
-	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-type OSBuildOptions struct {
-	StoreDir  string
-	OutputDir string
-	ExtraEnv  []string
-
-	// BuildLog writes the osbuild output to the given writer
-	BuildLog io.Writer
-
-	CacheMaxSize int64
-}
-
-// XXX: merge variant back into images/pkg/osbuild/osbuild-exec.go
-func RunOSBuild(pb ProgressBar, manifest []byte, exports []string, opts *OSBuildOptions) error {
+// XXX: merge variant with progress bar into images/pkg/osbuild/osbuild-exec.go?
+func RunOSBuild(pb ProgressBar, buildLog io.Writer, manifest []byte, exports []string, opts *osbuild.OSBuildOptions) error {
 	if opts == nil {
-		opts = &OSBuildOptions{}
+		opts = &osbuild.OSBuildOptions{}
 	}
 
 	// To keep maximum compatibility keep the old behavior to run osbuild
@@ -42,37 +29,17 @@ func RunOSBuild(pb ProgressBar, manifest []byte, exports []string, opts *OSBuild
 	// just run with the new runOSBuildWithProgress() helper.
 	switch pb.(type) {
 	case *terminalProgressBar, *debugProgressBar:
-		return runOSBuildWithProgress(pb, manifest, exports, opts)
+		return runOSBuildWithProgress(pb, buildLog, manifest, exports, opts)
 	default:
-		return runOSBuildNoProgress(pb, manifest, exports, opts)
+		return runOSBuildNoProgress(pb, buildLog, manifest, exports, opts)
 	}
 }
 
-func newOsbuildCmd(manifest []byte, exports []string, opts *OSBuildOptions) *exec.Cmd {
-	cacheMaxSize := int64(20 * datasizes.GiB)
-	if opts.CacheMaxSize != 0 {
-		cacheMaxSize = opts.CacheMaxSize
-	}
-	cmd := exec.Command(
-		osbuildCmd,
-		"--store", opts.StoreDir,
-		"--output-directory", opts.OutputDir,
-		fmt.Sprintf("--cache-max-size=%v", cacheMaxSize),
-		"-",
-	)
-	for _, export := range exports {
-		cmd.Args = append(cmd.Args, "--export", export)
-	}
-	cmd.Env = append(os.Environ(), opts.ExtraEnv...)
-	cmd.Stdin = bytes.NewBuffer(manifest)
-	return cmd
-}
-
-func runOSBuildNoProgress(pb ProgressBar, manifest []byte, exports []string, opts *OSBuildOptions) error {
+func runOSBuildNoProgress(pb ProgressBar, buildLog io.Writer, manifest []byte, exports []string, opts *osbuild.OSBuildOptions) error {
 	var stdout, stderr io.Writer
 
 	var writeMu sync.Mutex
-	if opts.BuildLog == nil {
+	if buildLog != nil {
 		// No external build log requested and we won't need an
 		// internal one because all output goes directly to
 		// stdout/stderr. This is for maximum compatibility with
@@ -92,12 +59,12 @@ func runOSBuildNoProgress(pb ProgressBar, manifest []byte, exports []string, opt
 		// (TestRunOSBuildWithBuildlog demos that). We cannot
 		// have our cake and eat it so here we need to combine
 		// osbuilds stderr into our stdout.
-		mw := newSyncedWriter(&writeMu, io.MultiWriter(osStdout(), opts.BuildLog))
+		mw := newSyncedWriter(&writeMu, io.MultiWriter(osStdout(), buildLog))
 		stdout = mw
 		stderr = mw
 	}
 
-	cmd := newOsbuildCmd(manifest, exports, opts)
+	cmd := osbuild.NewOSBuildCmd(manifest, exports, nil, opts)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
@@ -108,7 +75,7 @@ func runOSBuildNoProgress(pb ProgressBar, manifest []byte, exports []string, opt
 
 var osbuildCmd = "osbuild"
 
-func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, opts *OSBuildOptions) (err error) {
+func runOSBuildWithProgress(pb ProgressBar, buildLog io.Writer, manifest []byte, exports []string, opts *osbuild.OSBuildOptions) (err error) {
 	rp, wp, err := os.Pipe()
 	if err != nil {
 		return fmt.Errorf("cannot create pipe for osbuild: %w", err)
@@ -116,19 +83,19 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 	defer rp.Close()
 	defer wp.Close()
 
-	cmd := newOsbuildCmd(manifest, exports, opts)
-	cmd.Args = append(cmd.Args, "--monitor=JSONSeqMonitor")
-	cmd.Args = append(cmd.Args, "--monitor-fd=3")
+	opts.Monitor = osbuild.MonitorJSONSeq
+	opts.MonitorFD = 3
+	cmd := osbuild.NewOSBuildCmd(manifest, exports, nil, opts)
 
 	var stdio bytes.Buffer
-	var mw, buildLog io.Writer
+	var mw, buildLogger io.Writer
 	var writeMu sync.Mutex
-	if opts.BuildLog != nil {
-		mw = newSyncedWriter(&writeMu, io.MultiWriter(&stdio, opts.BuildLog))
-		buildLog = newSyncedWriter(&writeMu, opts.BuildLog)
+	if buildLog != nil {
+		mw = newSyncedWriter(&writeMu, io.MultiWriter(&stdio, buildLog))
+		buildLogger = newSyncedWriter(&writeMu, buildLog)
 	} else {
 		mw = &stdio
-		buildLog = io.Discard
+		buildLogger = io.Discard
 	}
 
 	cmd.Stdout = mw
@@ -186,11 +153,11 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 		// external build log
 		if st.Message != "" {
 			tracesMsgs = append(tracesMsgs, st.Message)
-			fmt.Fprintln(buildLog, st.Message)
+			fmt.Fprintln(buildLogger, st.Message)
 		}
 		if st.Trace != "" {
 			tracesMsgs = append(tracesMsgs, st.Trace)
-			fmt.Fprintln(buildLog, st.Trace)
+			fmt.Fprintln(buildLogger, st.Trace)
 		}
 	}
 
