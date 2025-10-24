@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/osbuild"
 )
 
 type buildOptions struct {
@@ -35,7 +36,7 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		}
 	}
 
-	osbuildOpts := &progress.OSBuildOptions{
+	osbuildOpts := &osbuild.OSBuildOptions{
 		StoreDir:  opts.StoreDir,
 		OutputDir: opts.OutputDir,
 	}
