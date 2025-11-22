@@ -112,7 +112,7 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 			return nil, fmt.Errorf("Invalid tag format: %s (expected key=value)", tag)
 		}
 		slicedTags = append(slicedTags, awscloud.AWSTag{
-			Name: parts[0],
+			Name:  parts[0],
 			Value: parts[1],
 		})
 	}
