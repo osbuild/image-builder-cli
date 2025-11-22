@@ -31,11 +31,118 @@ def test_smoke_has_expected_images_centos(build_container):
         "vagrant-libvirt": ["x86_64"],
         "vagrant-virtualbox": ["x86_64"],
         "image-installer": ["x86_64", "aarch64"],
+        "container": ["x86_64", "aarch64"],
+        "container-minimal": ["x86_64", "aarch64"],
     }
 
     for distro in ["centos-9", "centos-10"]:
         for type_, arches in type_arch.items():
             for arch in arches:
+                assert f"{distro} type:{type_} arch:{arch}" in output
+
+
+def test_smoke_has_expected_images_almalinux_8(build_container):
+    output = subprocess.check_output(podman_run + [
+        build_container,
+        "list",
+    ], text=True)
+
+    type_arch = {
+        "ami": ["aarch64", "x86_64"],
+        "ec2": ["aarch64", "x86_64"],
+        "gce": ["x86_64"],
+        "image-installer": ["aarch64", "x86_64"],
+        "minimal-raw": ["aarch64", "x86_64"],
+        "network-installer": ["aarch64", "x86_64"],
+        "oci": ["x86_64"],
+        "openstack": ["aarch64", "x86_64"],
+        "ova": ["x86_64"],
+        "qcow2": ["aarch64", "x86_64", "ppc64le", "s390x"],
+        "tar": ["aarch64", "x86_64", "ppc64le", "s390x"],
+        "vhd": ["aarch64", "x86_64"],
+        "vmdk": ["x86_64"],
+        "wsl": ["aarch64", "x86_64"],
+    }
+
+    versions = [
+        "almalinux-8.4",
+        "almalinux-8.5",
+        "almalinux-8.6",
+        "almalinux-8.7",
+        "almalinux-8.8",
+        "almalinux-8.9",
+        "almalinux-8.10",
+    ]
+
+    expected_to_not_exist = [
+        # alma linux did not have ppc64le before 8.5 and no s390x before 8.6, lets
+        # skip testing their existence
+        ("almalinux-8.4", "tar", "ppc64le"),
+        ("almalinux-8.4", "tar", "s390x"),
+        ("almalinux-8.4", "qcow2", "ppc64le"),
+        ("almalinux-8.4", "qcow2", "s390x"),
+
+        ("almalinux-8.5", "tar", "s390x"),
+        ("almalinux-8.5", "qcow2", "s390x"),
+
+        # there was no vhd for aarch64 before 8.6
+        ("almalinux-8.4", "vhd", "aarch64"),
+        ("almalinux-8.5", "vhd", "aarch64"),
+    ]
+
+    for distro in versions:
+        for type_, arches in type_arch.items():
+            for arch in arches:
+                if (distro, type_, arch) in expected_to_not_exist:
+                    continue
+                assert f"{distro} type:{type_} arch:{arch}" in output
+
+
+def test_smoke_has_expected_images_almalinux_9_and_10(build_container):
+    output = subprocess.check_output(podman_run + [
+        build_container,
+        "list",
+    ], text=True)
+
+    type_arch = {
+        "tar": ["aarch64", "x86_64", "ppc64le", "s390x"],
+        "qcow2": ["aarch64", "x86_64", "ppc64le", "s390x"],
+        "ec2": ["x86_64", "aarch64"],
+        "azure": ["x86_64", "aarch64"],
+        "wsl": ["x86_64", "aarch64"],
+        "vagrant-libvirt": ["x86_64"],
+        "vagrant-virtualbox": ["x86_64"],
+        "image-installer": ["x86_64", "aarch64"],
+        "container": ["x86_64", "aarch64"],
+        "container-minimal": ["x86_64", "aarch64"],
+    }
+
+    versions = [
+        "almalinux-9.0",
+        "almalinux-9.1",
+        "almalinux-9.2",
+        "almalinux-9.3",
+        "almalinux-9.4",
+        "almalinux-9.5",
+        "almalinux-9.6",
+        "almalinux-9.7",
+        "almalinux-9.8",
+
+        "almalinux-10.0",
+        "almalinux-10.1",
+        "almalinux-10.2",
+
+        "almalinux_kitten-10",
+    ]
+
+    expected_to_not_exist = [
+    ]
+
+    for distro in versions:
+        for type_, arches in type_arch.items():
+            for arch in arches:
+                if (distro, type_, arch) in expected_to_not_exist:
+                    continue
                 assert f"{distro} type:{type_} arch:{arch}" in output
 
 
