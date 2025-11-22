@@ -99,6 +99,7 @@ $(BUILDDIR)/%/:
 .PHONY: build
 build: $(BUILDDIR)/bin/  ## build the binary from source
 	go build -ldflags="-X main.version=${VERSION}" -o $<image-builder ./cmd/image-builder/
+	(cd ./cmd/image-builder && ln -sf image-builder bootc-image-builder)
 
 .PHONY: clean
 clean:  ## Remove all built binaries
