@@ -39,6 +39,9 @@ type describeImgYAML struct {
 	Packages         map[string]*packagesYAML `yaml:"packages"`
 
 	PartitionTable *disk.PartitionTable `yaml:"partition_table,omitempty"`
+
+	SupportedBpOptions []string `yaml:"supported_blueprint_options,omitempty"`
+	RequiredBpOptions  []string `yaml:"required_blueprint_options,omitempty"`
 }
 
 type packagesYAML struct {
@@ -135,17 +138,19 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 	arch := img.ImgType.Arch()
 	distro := arch.Distro()
 	outYaml := &describeImgYAML{
-		Distro:           distro.Name(),
-		OsVersion:        distro.OsVersion(),
-		Arch:             arch.Name(),
-		Type:             img.ImgType.Name(),
-		Bootmode:         img.ImgType.BootMode().String(),
-		PartitionType:    img.ImgType.PartitionType().String(),
-		DefaultFilename:  img.ImgType.Filename(),
-		BuildPipelines:   m.BuildPipelines(),
-		PayloadPipelines: m.PayloadPipelines(),
-		Packages:         pkgSets,
-		PartitionTable:   partTable,
+		Distro:             distro.Name(),
+		OsVersion:          distro.OsVersion(),
+		Arch:               arch.Name(),
+		Type:               img.ImgType.Name(),
+		Bootmode:           img.ImgType.BootMode().String(),
+		PartitionType:      img.ImgType.PartitionType().String(),
+		DefaultFilename:    img.ImgType.Filename(),
+		BuildPipelines:     m.BuildPipelines(),
+		PayloadPipelines:   m.PayloadPipelines(),
+		Packages:           pkgSets,
+		PartitionTable:     partTable,
+		SupportedBpOptions: img.ImgType.SupportedBlueprintOptions(),
+		RequiredBpOptions:  img.ImgType.RequiredBlueprintOptions(),
 	}
 	// deliberately break the yaml until the feature is stable
 	fmt.Fprint(out, "@WARNING - the output format is not stable yet and may change\n")
