@@ -49,11 +49,10 @@ jobs:
       - name: Install integration test env
         run: |
           sudo apt update
-          sudo apt install -y python3-pytest golang
+          sudo apt install -y python3-pytest python3-pytest-xdist golang
       - name: Run integration tests via pytest
         run: |
-          # use "-s" for now for easier debugging
-          sudo pytest -s -v test/test_build.py
+          sudo pytest -n 4 -v test/test_build.py
 
   build-cross:
     name: "Build (Cross-Architecture)"
@@ -64,14 +63,13 @@ jobs:
       - name: Install integration test env
         run: |
           sudo apt update
-          sudo apt install -y python3-pytest golang libvirt-dev
+          sudo apt install -y python3-pytest python3-pytest-xdist golang libvirt-dev
       - name: Install cross build dependencies
         run: sudo apt install -y qemu-user-static
 
       - name: Run integration tests via pytest
         run: |
-          # use "-s" for now for easier debugging
-          sudo pytest -s -v test/test_build_cross.py
+          sudo pytest -n 4 -v test/test_build_cross.py
 
   smoke:
     name: "Smoke"
