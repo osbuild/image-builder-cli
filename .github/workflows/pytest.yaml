@@ -46,6 +46,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/testdeps
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: true
+          # The following line runs apt remove which is slow
+          large-packages: false
       - name: Install integration test env
         run: |
           sudo apt update
@@ -60,6 +66,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/testdeps
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: true
+          # The following line runs apt remove which is slow
+          large-packages: false
       - name: Install integration test env
         run: |
           sudo apt update
