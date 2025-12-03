@@ -74,7 +74,7 @@ func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploade
 
 func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	switch typeOrCloud {
-	case "ami", "server-ami", "aws":
+	case "ami", "generic-ami", "aws":
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
 	case "libvirt":
 		return uploaderForLibvirt(cmd, targetArch, bootMode)
@@ -112,7 +112,7 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 			return nil, fmt.Errorf("Invalid tag format: %s (expected key=value)", tag)
 		}
 		slicedTags = append(slicedTags, awscloud.AWSTag{
-			Name: parts[0],
+			Name:  parts[0],
 			Value: parts[1],
 		})
 	}
