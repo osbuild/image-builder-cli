@@ -289,8 +289,8 @@ github.com/opencontainers/selinux v1.12.0 h1:6n5JV4Cf+4y0KNXW48TLj5DwfXpvWlxXplU
 github.com/opencontainers/selinux v1.12.0/go.mod h1:BTPX+bjVbWGXw7ZZWUbdENt8w0htPSrlgOOysQaU62U=
 github.com/osbuild/blueprint v1.18.0 h1:Q95lRlPegoeb0uSgmY2yQK+oF8vZjmmxd61zRVdiBL0=
 github.com/osbuild/blueprint v1.18.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
-github.com/osbuild/images v0.226.0 h1:NiryPkd+rx0iPFzKV7s/GP8HPuSuVyXDT2guWVx/i+k=
-github.com/osbuild/images v0.226.0/go.mod h1:Cs7zFV8rmbVHn+19ArNdjd1AtFk+LC9dOOHuxiSLghw=
+github.com/osbuild/images v0.228.0 h1:DL2W1tGkBcO0W5nS/NnVi6DaFDMNPBFI6zIoARZkXKE=
+github.com/osbuild/images v0.228.0/go.mod h1:Cs7zFV8rmbVHn+19ArNdjd1AtFk+LC9dOOHuxiSLghw=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
