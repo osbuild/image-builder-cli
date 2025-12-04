@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/bootc"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -132,6 +133,21 @@ func subscriptionImageOptions(cmd *cobra.Command) (*subscription.ImageOptions, e
 		return nil, fmt.Errorf("cannot parse registrations file: %w", err)
 	}
 	return regs.Redhat.Subscription, nil
+}
+
+func needBootstrapContainer(img distro.ImageType) bool {
+	if img.Arch().Name() != arch.Current().String() {
+		return true
+	}
+	hostDistro, err := distro.GetHostDistroName()
+	if err != nil {
+		log.Printf("WARNING: cannot get host distro: %v", err)
+	}
+	if img.Arch().Distro().Name() != hostDistro {
+		return true
+	}
+
+	return false
 }
 
 type cmdManifestWrapperOptions struct {
@@ -312,9 +328,11 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 		ForceRepos: forceRepos,
 	}
-	opts.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
+	if wrapperOpts.useBootstrapIfNeeded {
+		opts.UseBootstrapContainer = needBootstrapContainer(img.ImgType)
+	}
 	if opts.UseBootstrapContainer {
-		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
+		fmt.Fprintf(os.Stderr, "WARNING: using experimental bootstrap building to build %q\n", img.ImgType.Arch().Name())
 	}
 
 	err = generateManifest(dataDir, extraRepos, img, w, wd, opts)
