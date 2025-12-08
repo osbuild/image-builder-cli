@@ -1,5 +1,5 @@
 ---
-name: Tests
+name: Bib tests
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
   merge_group:
 
 env:
-  GO_VERSION: 1.22
+  GO_VERSION: 1.23
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -83,12 +83,11 @@ jobs:
       - name: Collect test files
         id: collect
         run: |
-          TEST_FILES=$(ls test/test_*.py | sort)
+          TEST_FILES=$(ls test/bib/test_*.py | sort)
           JSON_FILES=$(echo "${TEST_FILES}" | jq -R | jq -cs )
           echo "test_files=${JSON_FILES}" >> $GITHUB_OUTPUT
 
   integration:
-    # TODO: run this also via tmt/testing-farm
     name: "Integration"
     runs-on: ubuntu-24.04
     needs: collect_tests
