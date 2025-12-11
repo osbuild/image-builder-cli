@@ -160,6 +160,7 @@ func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeSt
 	if useLibrepo {
 		rpmDownloader = osbuild.RpmDownloaderLibrepo
 	}
+	var mTLS *mTLSConfig
 	mg, err := manifestgen.New(repos, &manifestgen.Options{
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
@@ -172,6 +173,15 @@ func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeSt
 		RpmDownloader: rpmDownloader,
 		Depsolve: func(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
 			depsolveResult, err = manifestgen.DefaultDepsolve(solver, cacheDir, depsolveWarningsOutput, packageSets, d, arch)
+			// extracting needs to happen while container is mounted
+			depsolvedRepos := make(map[string][]rpmmd.RepoConfig)
+			for k, v := range depsolveResult {
+				depsolvedRepos[k] = v.Repos
+			}
+			mTLS, err = extractTLSKeys(depsolvedRepos)
+			if err != nil {
+				return nil, err
+			}
 			return depsolveResult, err
 		},
 		// this turns (blueprint validation) warnings into
@@ -187,15 +197,6 @@ func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeSt
 		},
 	}
 	manifest, err := mg.Generate(config, imgType, imgOpts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	depsolvedRepos := make(map[string][]rpmmd.RepoConfig)
-	for k, v := range depsolveResult {
-		depsolvedRepos[k] = v.Repos
-	}
-	mTLS, err := extractTLSKeys(depsolvedRepos)
 	if err != nil {
 		return nil, nil, err
 	}
