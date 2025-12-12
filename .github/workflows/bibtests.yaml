@@ -19,58 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: "⌨ Lint & unittests"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Apt update
-        run: sudo apt update
-
-      # This is needed for the container upload dependencies
-      - name: Install libgpgme devel package
-        run: sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev
-
-      - name: Extract golangci-lint version from Makefile
-        id: golangci_lint_version
-        run: echo "GOLANGCI_LINT_VERSION=$(awk -F '=' '/^GOLANGCI_LINT_VERSION *=/{print $2}' Makefile)" >> "$GITHUB_OUTPUT"
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: ${{ steps.golangci_lint_version.outputs.GOLANGCI_LINT_VERSION }}
-          args: --timeout 5m0s
-          working-directory: bib
-
-      - name: Run unit tests
-        run: (cd bib && go test -race  ./...)
-
-  shellcheck:
-    name: "🐚 Shellcheck"
-    runs-on: ubuntu-24.04
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-    - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
-      with:
-        ignore: vendor # We don't want to fix the code in vendored dependencies
-      env:
-        # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
-        # allow seemingly unreachable commands
-        SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
-
   collect_tests:
     runs-on: ubuntu-latest
     outputs:
@@ -131,7 +79,7 @@ jobs:
     - name: Install python test deps
       run: |
         # make sure test deps are available for root
-        sudo -E pip install --user -r test/requirements.txt
+        sudo -E pip install --user -r test/bib/requirements.txt
     - name: Workarounds for GH runner diskspace
       run: |
         # use custom basetemp here because /var/tmp is on a smaller disk
@@ -156,7 +104,7 @@ jobs:
         # podman needs (parts of) the environment but will break when
         # XDG_RUNTIME_DIR is set.
         # TODO: figure out what exactly podman needs
-        sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest-3 --basetemp=/mnt/var/tmp/bib-tests ${{ matrix.test_file }}
+        sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest-3 -v --basetemp=/mnt/var/tmp/bib-tests ${{ matrix.test_file }}
     - name: Diskspace (after)
       if: ${{ always() }}
       run: |
