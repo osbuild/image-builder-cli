@@ -11,7 +11,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
-	github.com/osbuild/blueprint v1.20.0
+	github.com/osbuild/blueprint v1.21.0
 	github.com/osbuild/images v0.231.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.2
