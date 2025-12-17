@@ -21,17 +21,13 @@ import (
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro/bootc"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 	"github.com/osbuild/image-builder-cli/internal/olog"
 	"github.com/osbuild/image-builder-cli/pkg/setup"
-)
-
-var (
-	osStdout io.Writer = os.Stdout
-	osStderr io.Writer = os.Stderr
 )
 
 // basenameFor returns the basename for directory and filenames
@@ -134,14 +130,10 @@ func subscriptionImageOptions(cmd *cobra.Command) (*subscription.ImageOptions, e
 	return regs.Redhat.Subscription, nil
 }
 
-type cmdManifestWrapperOptions struct {
-	useBootstrapIfNeeded bool
-}
+// used in tests
+var manifestgenDepsolver manifestgen.DepsolveFunc
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
-	if wrapperOpts == nil {
-		wrapperOpts = &cmdManifestWrapperOptions{}
-	}
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("force-data-dir")
 	if err != nil {
 		return nil, err
@@ -210,6 +202,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		customSeed = &seedFlagVal
 	}
 	subscription, err := subscriptionImageOptions(cmd)
+	if err != nil {
+		return nil, err
+	}
+	disableBootstrapContainer, err := cmd.Flags().GetBool("without-bootstrap-container")
 	if err != nil {
 		return nil, err
 	}
@@ -304,27 +300,31 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	}
 
 	opts := &manifestOptions{
+		ManifestgenOptions: manifestgen.Options{
+			Cachedir:               rpmmdCacheDir,
+			CustomSeed:             customSeed,
+			RpmDownloader:          rpmDownloader,
+			DepsolveWarningsOutput: wd,
+			Depsolve:               manifestgenDepsolver,
+			UseBootstrapContainer:  !disableBootstrapContainer,
+		},
 		OutputDir:                outputDir,
 		OutputFilename:           outputFilename,
 		BlueprintPath:            blueprintPath,
 		Ostree:                   ostreeImgOpts,
 		BootcRef:                 bootcRef,
 		BootcInstallerPayloadRef: bootcInstallerPayloadRef,
-		RpmDownloader:            rpmDownloader,
 		WithSBOM:                 withSBOM,
 		IgnoreWarnings:           ignoreWarnings,
-		CustomSeed:               customSeed,
 		Subscription:             subscription,
-		RpmmdCacheDir:            rpmmdCacheDir,
 
 		ForceRepos: forceRepos,
 	}
-	opts.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
-	if opts.UseBootstrapContainer {
+	if img.ImgType.Arch().Name() != arch.Current().String() {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
 
-	err = generateManifest(dataDir, extraRepos, img, w, wd, opts)
+	err = generateManifest(dataDir, extraRepos, img, w, opts)
 	return img, err
 }
 
@@ -333,7 +333,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, io.Discard, nil)
+	_, err = cmdManifestWrapper(pbar, cmd, args, os.Stdout, io.Discard)
 	return err
 }
 
@@ -401,13 +401,9 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}()
 
 	var mf bytes.Buffer
-	opts := &cmdManifestWrapperOptions{
-		useBootstrapIfNeeded: true,
-	}
-
 	// We discard any warnings from the depsolver until we figure out a better
 	// idea (likely in manifestgen)
-	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, io.Discard, opts)
+	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, io.Discard)
 	if err != nil {
 		return err
 	}
@@ -445,7 +441,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 	pbar.Stop()
 
-	fmt.Fprintf(osStdout, "Image build successful: %s\n", imagePath)
+	fmt.Fprintf(os.Stdout, "Image build successful: %s\n", imagePath)
 
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
@@ -486,7 +482,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return describeImage(res, osStdout)
+	return describeImage(res, os.Stdout)
 }
 
 func normalizeRootArgs(_ *pflag.FlagSet, name string) pflag.NormalizedName {
@@ -537,9 +533,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
 
-	rootCmd.SetOut(osStdout)
-	rootCmd.SetErr(osStderr)
-
 	listCmd := &cobra.Command{
 		Use:          "list",
 		Short:        "List buildable images, use --filter to limit further",
@@ -576,6 +569,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
+	manifestCmd.Flags().Bool("without-bootstrap-container", false, `disable using a "bootstrap" container to generate the initial buildroot`)
 	rootCmd.AddCommand(manifestCmd)
 
 	uploadCmd := &cobra.Command{
