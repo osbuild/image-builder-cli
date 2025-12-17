@@ -54,12 +54,12 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	size := uint64(st.Size())
 	pbar := pb.New64(st.Size())
 	pbar.Set(pb.Bytes, true)
-	pbar.SetWriter(osStdout)
+	pbar.SetWriter(os.Stdout)
 	r := pbar.NewProxyReader(f)
 	pbar.Start()
 	defer pbar.Finish()
 
-	return uploader.UploadAndRegister(r, size, osStderr)
+	return uploader.UploadAndRegister(r, size, os.Stderr)
 }
 
 func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploader) error {
@@ -264,11 +264,11 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 	if targetArch == "" {
 		targetArch = detectArchFromImagePath(imagePath)
 		if targetArch != "" {
-			fmt.Fprintf(osStderr, "Note: using architecture %q based on image filename (use --arch to override)\n", targetArch)
+			fmt.Fprintf(os.Stderr, "Note: using architecture %q based on image filename (use --arch to override)\n", targetArch)
 		}
 		if targetArch == "" {
 			targetArch = arch.Current().String()
-			fmt.Fprintf(osStderr, "WARNING: no upload architecture specified, using %q (use --arch to override)\n", targetArch)
+			fmt.Fprintf(os.Stderr, "WARNING: no upload architecture specified, using %q (use --arch to override)\n", targetArch)
 		}
 	}
 
