@@ -899,14 +899,56 @@ func TestBuildCrossArchSmoke(t *testing.T) {
 		assert.NoError(t, err)
 		pipelines, err := manifesttest.PipelineNamesFrom(manifest)
 		assert.NoError(t, err)
-		crossArchPipeline := "bootstrap-buildroot"
+		bootstrapPipeline := "bootstrap-buildroot"
 		crossArchWarning := `WARNING: using experimental cross-architecture building to build "aarch64"`
+		// the bootstrap pipeline is the default for all builds
+		assert.Contains(t, pipelines, bootstrapPipeline)
 		if withCrossArch {
-			assert.Contains(t, pipelines, crossArchPipeline)
 			assert.Contains(t, stderr, crossArchWarning)
 		} else {
-			assert.NotContains(t, pipelines, crossArchPipeline)
 			assert.NotContains(t, stderr, crossArchWarning)
+		}
+	}
+}
+
+func TestManifestBootstrapContainer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	for _, disableBootstrapContainer := range []bool{false, true} {
+		cmd := []string{
+			"manifest",
+			"tar",
+			"--distro", "centos-10",
+		}
+		if disableBootstrapContainer {
+			cmd = append(cmd, "--without-bootstrap-container")
+		}
+		restore = main.MockOsArgs(cmd)
+		defer restore()
+
+		var fakeStdout bytes.Buffer
+		restore = main.MockOsStdout(&fakeStdout)
+		defer restore()
+
+		// XXX: capture stderr here too to ensure no cross build warning
+		err := main.Run()
+		assert.NoError(t, err)
+
+		pipelines, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+		assert.NoError(t, err)
+		bootstrapPipeline := "bootstrap-buildroot"
+		if disableBootstrapContainer {
+			assert.NotContains(t, pipelines, bootstrapPipeline)
+		} else {
+			assert.Contains(t, pipelines, bootstrapPipeline)
 		}
 	}
 }
