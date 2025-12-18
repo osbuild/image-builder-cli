@@ -71,8 +71,8 @@ func TestNewRepoRegistryImplDatadir(t *testing.T) {
 
 	// create a custom datadir with testdistro-1.json, the basefilename
 	// must match a distro nameVer
-	dataDir := t.TempDir()
-	repoFile := filepath.Join(dataDir, "repositories", "testdistro-1.json")
+	repoDir := t.TempDir()
+	repoFile := filepath.Join(repoDir, "repositories", "testdistro-1.json")
 	err = os.Mkdir(filepath.Dir(repoFile), 0755)
 	require.NoError(t, err)
 	repoContents := `{
@@ -88,7 +88,7 @@ func TestNewRepoRegistryImplDatadir(t *testing.T) {
 	require.NoError(t, err)
 
 	// and ensure we have testdistro-1 now
-	registry, err = newRepoRegistryImpl(dataDir, nil)
+	registry, err = newRepoRegistryImpl(repoDir, nil)
 	require.NoError(t, err)
 	repos, err := registry.DistroHasRepos("testdistro-1", "x86_64")
 	require.NoError(t, err)

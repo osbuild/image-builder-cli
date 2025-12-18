@@ -66,7 +66,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	dataDir, err := cmd.Flags().GetString("force-data-dir")
+	repoDir, err := cmd.Flags().GetString("force-repo-dir")
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return listImages(dataDir, extraRepos, format, filter)
+	return listImages(repoDir, extraRepos, format, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -142,7 +142,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if wrapperOpts == nil {
 		wrapperOpts = &cmdManifestWrapperOptions{}
 	}
-	dataDir, err := cmd.Flags().GetString("force-data-dir")
+	repoDir, err := cmd.Flags().GetString("force-repo-dir")
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		forceRepos = []string{"https://example.com/not-used"}
 	} else {
 		repoOpts := &repoOptions{
-			DataDir:    dataDir,
+			RepoDir:    repoDir,
 			ExtraRepos: extraRepos,
 			ForceRepos: forceRepos,
 		}
@@ -324,7 +324,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
 
-	err = generateManifest(dataDir, extraRepos, img, w, wd, opts)
+	err = generateManifest(repoDir, extraRepos, img, w, wd, opts)
 	return img, err
 }
 
@@ -459,7 +459,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	// XXX: boilderplate identical to cmdManifest() above
-	dataDir, err := cmd.Flags().GetString("force-data-dir")
+	repoDir, err := cmd.Flags().GetString("force-repo-dir")
 	if err != nil {
 		return err
 	}
@@ -481,7 +481,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	}
 
 	imgTypeStr := args[0]
-	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{DataDir: dataDir})
+	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{RepoDir: repoDir})
 	if err != nil {
 		return err
 	}
@@ -492,7 +492,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 func normalizeRootArgs(_ *pflag.FlagSet, name string) pflag.NormalizedName {
 	switch name {
 	case "data-dir":
-		name = "force-data-dir"
+		name = "force-repo-dir"
 		break
 	}
 
@@ -528,9 +528,11 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 
 	rootCmd.Flags().Bool("version", false, "Print version information and exit")
-	var forceDataDir string
-	rootCmd.PersistentFlags().StringVar(&forceDataDir, "force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
-	rootCmd.PersistentFlags().StringVar(&forceDataDir, "data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	var forceRepoDir string
+	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-repo-dir", "", "Override the default repository search path for custom repository files")
+	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().MarkDeprecated("force-data-dir", `Use --force-repo-dir instead`)
+	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-data-dir instead`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
