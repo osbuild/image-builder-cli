@@ -7,11 +7,11 @@ go 1.23.9
 toolchain go1.24.4
 
 require (
-	github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
+	github.com/BurntSushi/toml v1.6.0
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.20
-	github.com/osbuild/blueprint v1.18.0
+	github.com/osbuild/blueprint v1.22.0
 	github.com/osbuild/images v0.228.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.2
