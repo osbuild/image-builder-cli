@@ -7,6 +7,12 @@ on:  # yamllint disable-line rule:truthy
     branches: ["main"]
   merge_group:
     types: ["checks_requested"]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for running'
+        required: false
+        default: 'No reason provided'
 
 jobs:
   lint:
