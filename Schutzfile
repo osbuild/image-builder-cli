@@ -2,7 +2,7 @@
   "common": {
     "dependencies": {
       "osbuild": {
-        "commit": ""
+        "commit": "6c34e00bedd8101293382f2d563d111825b46349"
       }
     }
   }
