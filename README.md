@@ -143,8 +143,8 @@ $ cat > registrations.json <<EOF
     "subscription": {
       "activation_key": "replace-with_activation_key",
       "organization": "replace-with_org",
-      "server_url": "replace-with_server_url",
-      "base_url": "replace_with-base_url",
+      "server_hostname": "subscription.rhsm.redhat.com",
+      "base_url": "https://cdn.redhat.com",
       "insights": true,
       "rhc": true,
       "proxy": "replace-with_proxy"
