@@ -646,14 +646,19 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.AddCommand(describeImgCmd)
 
-	verbose, err := rootCmd.PersistentFlags().GetBool("verbose")
-	if err != nil {
-		return err
-	}
-	if verbose {
-		olog.SetDefault(log.New(os.Stderr, "", 0))
-		// XXX: add once images has olog support
-		//images_log.SetDefault(log.New(os.Stderr, "", 0))
+	// Flags are not parsed yet, so we need to use this hook for enabling verbose logging for all commands
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			return err
+		}
+		if verbose {
+			olog.SetDefault(log.New(os.Stderr, "", 0))
+			olog.Print("verbose logging enabled")
+			// XXX: add once images has olog support
+			//images_log.SetDefault(log.New(os.Stderr, "", 0))
+		}
+		return nil
 	}
 
 	return rootCmd.Execute()
