@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -655,7 +656,11 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		if verbose {
 			olog.SetDefault(log.New(os.Stderr, "", 0))
 			olog.Print("verbose logging enabled")
-			// XXX: add once images has olog support
+			// osbuild/images still partially uses logrus, so enable it here as well
+			logrus.SetLevel(logrus.DebugLevel)
+			logrus.SetOutput(os.Stderr)
+			logrus.Debug("legacy logrus logging enabled")
+			// XXX: add once images has olog support, and drop logrus
 			//images_log.SetDefault(log.New(os.Stderr, "", 0))
 		}
 		return nil
