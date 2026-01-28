@@ -17,7 +17,7 @@ import (
 
 // EnsureEnvironment mutates external filesystem state as necessary
 // to run in a container environment.  This function is idempotent.
-func EnsureEnvironment(storePath string) error {
+func EnsureEnvironment(storePath string, inVm bool) error {
 	osbuildPath := "/usr/bin/osbuild"
 	if util.IsMountpoint(osbuildPath) {
 		return nil
@@ -63,9 +63,11 @@ func EnsureEnvironment(storePath string) error {
 	}
 
 	// Ensure we have devfs inside the container to get dynamic loop
-	// loop devices inside the container.
-	if err := util.RunCmdSync("mount", "-t", "devtmpfs", "devtmpfs", "/dev"); err != nil {
-		return err
+	// loop devices inside the container. (Not needed if in a vm)
+	if !inVm {
+		if err := util.RunCmdSync("mount", "-t", "devtmpfs", "devtmpfs", "/dev"); err != nil {
+			return err
+		}
 	}
 
 	// Create a bind mount into our target location; we can't copy it because
@@ -80,12 +82,12 @@ func EnsureEnvironment(storePath string) error {
 
 // Validate checks that the environment is supported (e.g. caller set up the
 // container correctly)
-func Validate(targetArch string) error {
+func Validate(targetArch string, inVm bool) error {
 	isRootless, err := podmanutil.IsRootless()
 	if err != nil {
 		return fmt.Errorf("checking rootless: %w", err)
 	}
-	if isRootless {
+	if isRootless && !inVm {
 		return fmt.Errorf("this command must be run in rootful (not rootless) podman")
 	}
 
@@ -95,7 +97,7 @@ func Validate(targetArch string) error {
 	if err := unix.Statfs("/sys", &stvfsbuf); err != nil {
 		return fmt.Errorf("failed to stat /sys: %w", err)
 	}
-	if (stvfsbuf.Flags & unix.ST_RDONLY) > 0 {
+	if !inVm && (stvfsbuf.Flags&unix.ST_RDONLY) > 0 {
 		return fmt.Errorf("this command requires a privileged container")
 	}
 
