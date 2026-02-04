@@ -1,0 +1,9 @@
+{
+  "common": {
+    "dependencies": {
+      "osbuild": {
+        "commit": ""
+      }
+    }
+  }
+}
