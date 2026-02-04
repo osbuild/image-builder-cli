@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+# pylint: disable=invalid-name
+"""
+Setup osbuild dnf repository from S3 bucket when a commit is pinned in Schutzfile.
+
+This script reads the Schutzfile and sets up a dnf repository pointing to pre-built
+osbuild RPMs from the osbuild CI S3 bucket. If no commit is pinned, the script
+exits successfully without making any changes (no-op).
+
+The Schutzfile supports both common and distro-specific configurations:
+- Distro-specific: Schutzfile[distro]["dependencies"]["osbuild"]["commit"]
+- Common fallback: Schutzfile["common"]["dependencies"]["osbuild"]["commit"]
+"""
+
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+SCHUTZFILE = "Schutzfile"
+OS_RELEASE_FILE = "/etc/os-release"
+REPO_FILE = "/etc/yum.repos.d/osbuild.repo"
+
+URL_TEMPLATE = "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/{distro}/{arch}/{commit}"
+
+REPO_TEMPLATE = """[osbuild]
+name=osbuild {commit}
+baseurl={baseurl}
+enabled=1
+gpgcheck=0
+priority=10
+"""
+
+
+def read_os_release():
+    """
+    Read /etc/os-release and return as a dictionary.
+    """
+    osrelease = {}
+    with open(OS_RELEASE_FILE, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            key, value = line.split("=", 1)
+            osrelease[key] = value.strip('"')
+    return osrelease
+
+
+def get_host_distro():
+    """
+    Get the host distro identifier (e.g., 'fedora-41').
+    """
+    osrelease = read_os_release()
+    return f"{osrelease['ID']}-{osrelease['VERSION_ID']}"
+
+
+def get_osbuild_commit(schutzfile_data, distro):
+    """
+    Get the osbuild commit from Schutzfile.
+
+    Lookup order:
+    1. Distro-specific: schutzfile_data[distro]["dependencies"]["osbuild"]["commit"]
+    2. Common fallback: schutzfile_data["common"]["dependencies"]["osbuild"]["commit"]
+
+    Returns None if no commit is specified or the commit is an empty string.
+    """
+    # Try distro-specific first
+    commit = (
+        schutzfile_data.get(distro, {})
+        .get("dependencies", {})
+        .get("osbuild", {})
+        .get("commit")
+    )
+    if commit:
+        return commit
+
+    # Fall back to common
+    commit = (
+        schutzfile_data.get("common", {})
+        .get("dependencies", {})
+        .get("osbuild", {})
+        .get("commit")
+    )
+    if commit:
+        return commit
+
+    return None
+
+
+def check_repo_url(url):
+    """
+    Check if the repo URL is accessible.
+    """
+    repomd_url = f"{url}/repodata/repomd.xml"
+    print(f"Checking URL: {repomd_url}")
+    try:
+        with urllib.request.urlopen(repomd_url, timeout=30) as resp:
+            print(f"  {resp.status} ({resp.msg})")
+            return True
+    except urllib.error.HTTPError as e:
+        print(f"  HTTP Error: {e.code} {e.reason}")
+        return False
+    except urllib.error.URLError as e:
+        print(f"  URL Error: {e.reason}")
+        return False
+
+
+def write_repo_file(commit, baseurl):
+    """
+    Write the dnf repository configuration file.
+    """
+    print(f"Writing repository configuration to {REPO_FILE}")
+    with open(REPO_FILE, "w", encoding="utf-8") as f:
+        f.write(REPO_TEMPLATE.format(commit=commit, baseurl=baseurl))
+    print("  Done")
+
+
+def main():
+    if not os.path.exists(SCHUTZFILE):
+        print(f"No {SCHUTZFILE} found, skipping osbuild repo setup")
+        return
+
+    with open(SCHUTZFILE, encoding="utf-8") as f:
+        schutzfile_data = json.load(f)
+
+    distro = get_host_distro()
+    print(f"Host distro: {distro}")
+
+    commit = get_osbuild_commit(schutzfile_data, distro)
+    if not commit:
+        print("No osbuild commit pinned in Schutzfile, skipping repo setup")
+        return
+
+    print(f"Pinned osbuild commit: {commit}")
+
+    arch = os.uname().machine
+    baseurl = URL_TEMPLATE.format(distro=distro, arch=arch, commit=commit)
+    print(f"Repository URL: {baseurl}")
+
+    if not check_repo_url(baseurl):
+        print(
+            f"\nERROR: Failed to verify osbuild repo at {baseurl}/repodata/repomd.xml",
+            file=sys.stderr,
+        )
+        print(
+            f"The commit {commit} may not have been built in osbuild CI.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    write_repo_file(commit, baseurl)
+
+    print(f"\nSuccessfully configured osbuild repo for commit {commit}")
+    return
+
+
+if __name__ == "__main__":
+    main()
