@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,12 +52,6 @@ func TestUploadWithAWSMock(t *testing.T) {
 		})
 		defer restore()
 
-		var fakeStdout, fakeStderr bytes.Buffer
-		restore = main.MockOsStdout(&fakeStdout)
-		defer restore()
-		restore = main.MockOsStderr(&fakeStderr)
-		defer restore()
-
 		restore = main.MockOsArgs([]string{
 			"upload",
 			"--to=aws",
@@ -70,8 +63,10 @@ func TestUploadWithAWSMock(t *testing.T) {
 		})
 		defer restore()
 
-		err = main.Run()
-		require.NoError(t, err)
+		stdout, stderr := testutil.CaptureStdio(t, func() {
+			err = main.Run()
+			require.NoError(t, err)
+		})
 
 		assert.Equal(t, regionName, "aws-region-1")
 		assert.Equal(t, bucketName, "aws-bucket-2")
@@ -85,19 +80,15 @@ func TestUploadWithAWSMock(t *testing.T) {
 		assert.Equal(t, 1, fa.uploadAndRegisterCalls)
 		assert.Equal(t, fakeDiskContent, fa.uploadAndRegisterRead.String())
 		// progress was rendered
-		assert.Contains(t, fakeStdout.String(), "--] 100.00%")
+		assert.Contains(t, stdout, "--] 100.00%")
 
 		// warning was passed
-		assert.Equal(t, fakeStderr.String(), tc.expectedWarning)
+		assert.Equal(t, stderr, tc.expectedWarning)
 
 	}
 }
 
 func TestUploadCmdlineErrors(t *testing.T) {
-	var fakeStderr bytes.Buffer
-	restore := main.MockOsStderr(&fakeStderr)
-	defer restore()
-
 	for _, tc := range []struct {
 		cmdline     []string
 		expectedErr string
@@ -154,10 +145,6 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	fakeOsbuildScript := makeFakeOsbuildScript()
 	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
 	restore = main.MockOsArgs([]string{
 		"build",
 		"--output-dir", outputDir,
@@ -169,8 +156,10 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	})
 	defer restore()
 
-	err := main.Run()
-	require.NoError(t, err)
+	_, _ = testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		require.NoError(t, err)
+	})
 
 	assert.Equal(t, regionName, "aws-region-1")
 	assert.Equal(t, bucketName, "aws-bucket-2")
@@ -206,10 +195,6 @@ func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
 	fakeOsbuildScript := makeFakeOsbuildScript()
 	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
 	restore = main.MockOsArgs([]string{
 		"build",
 		"--output-dir", outputDir,
@@ -221,8 +206,10 @@ func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
 	})
 	defer restore()
 
-	err := main.Run()
-	require.NoError(t, err)
+	_, _ = testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		require.NoError(t, err)
+	})
 
 	assert.Equal(t, regionName, "aws-region-1")
 	assert.Equal(t, bucketName, "aws-bucket-2")
@@ -254,10 +241,6 @@ func TestBuildAmiButNotUpload(t *testing.T) {
 	fakeOsbuildScript := makeFakeOsbuildScript()
 	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
 	restore = main.MockOsArgs([]string{
 		"build",
 		"--output-dir", outputDir,
@@ -266,8 +249,10 @@ func TestBuildAmiButNotUpload(t *testing.T) {
 	})
 	defer restore()
 
-	err := main.Run()
-	require.NoError(t, err)
+	_, _ = testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		require.NoError(t, err)
+	})
 
 	assert.Equal(t, 0, fa.uploadAndRegisterCalls)
 }

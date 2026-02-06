@@ -32,11 +32,6 @@ import (
 	"github.com/osbuild/image-builder-cli/pkg/setup"
 )
 
-var (
-	osStdout io.Writer = os.Stdout
-	osStderr io.Writer = os.Stderr
-)
-
 // basenameFor returns the basename for directory and filenames
 // for the given imageType. This can be user overriden via userBasename.
 func basenameFor(img *imagefilter.Result, userBasename string) string {
@@ -365,7 +360,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, io.Discard, nil)
+	_, err = cmdManifestWrapper(pbar, cmd, args, os.Stdout, io.Discard, nil)
 	return err
 }
 
@@ -477,7 +472,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 	pbar.Stop()
 
-	fmt.Fprintf(osStdout, "Image build successful: %s\n", imagePath)
+	fmt.Fprintf(os.Stdout, "Image build successful: %s\n", imagePath)
 
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
@@ -518,7 +513,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return describeImage(res, osStdout)
+	return describeImage(res, os.Stdout)
 }
 
 func normalizeRootArgs(_ *pflag.FlagSet, name string) pflag.NormalizedName {
@@ -573,9 +568,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
-
-	rootCmd.SetOut(osStdout)
-	rootCmd.SetErr(osStderr)
 
 	listCmd := &cobra.Command{
 		Use:          "list",
