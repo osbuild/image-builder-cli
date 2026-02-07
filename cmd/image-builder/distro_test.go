@@ -1,12 +1,12 @@
 package main_test
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
+	"github.com/osbuild/image-builder-cli/internal/testutil"
 )
 
 func TestFindDistro(t *testing.T) {
@@ -32,17 +32,17 @@ func TestFindDistro(t *testing.T) {
 }
 
 func TestFindDistroAutoDetect(t *testing.T) {
-	var buf bytes.Buffer
-	restore := main.MockOsStderr(&buf)
-	defer restore()
-
-	restore = main.MockDistroGetHostDistroName(func() (string, error) {
+	restore := main.MockDistroGetHostDistroName(func() (string, error) {
 		return "mocked-host-distro", nil
 	})
 	defer restore()
 
-	distro, err := main.FindDistro("", "")
+	var err error
+	var distro string
+	_, stderr := testutil.CaptureStdio(t, func() {
+		distro, err = main.FindDistro("", "")
+	})
 	assert.NoError(t, err)
 	assert.Equal(t, "mocked-host-distro", distro)
-	assert.Equal(t, "No distro name specified, selecting \"mocked-host-distro\" based on host, use --distro to override\n", buf.String())
+	assert.Equal(t, "No distro name specified, selecting \"mocked-host-distro\" based on host, use --distro to override\n", stderr)
 }
