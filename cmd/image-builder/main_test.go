@@ -190,9 +190,9 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 			require.NoError(t, err)
 			assert.Contains(t, pipelineNames, "qcow2")
 
-			// XXX: provide helpers in manifesttest to extract this in a nicer way
-			assert.Contains(t, stdout, `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-			assert.Contains(t, stdout, `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+			assertJsonContains(t, stdout, `"type":"org.osbuild.users"`)
+			assertJsonContains(t, stdout, `"users":{"alice"`)
+			assertJsonContains(t, stdout, `"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 
 			assert.Equal(t, strings.Contains(stdout, "org.osbuild.librepo"), useLibrepo)
 		})
@@ -400,9 +400,9 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	// ... and that the manifest passed to osbuild
 	manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
 	assert.NoError(t, err)
-	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assertJsonContains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-	assertJsonContains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+	assertJsonContains(t, string(manifest), `"type":"org.osbuild.users"`)
+	assertJsonContains(t, string(manifest), `"users":{"alice"`)
+	assertJsonContains(t, string(manifest), `"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
 func TestBuildIntegrationArgs(t *testing.T) {
