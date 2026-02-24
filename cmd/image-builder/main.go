@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -676,14 +677,23 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.AddCommand(describeImgCmd)
 
-	verbose, err := rootCmd.PersistentFlags().GetBool("verbose")
-	if err != nil {
-		return err
-	}
-	if verbose {
-		olog.SetDefault(log.New(os.Stderr, "", 0))
-		// XXX: add once images has olog support
-		//images_log.SetDefault(log.New(os.Stderr, "", 0))
+	// Flags are not parsed yet, so we need to use this hook for enabling verbose logging for all commands
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			return err
+		}
+		if verbose {
+			olog.SetDefault(log.New(os.Stderr, "", 0))
+			olog.Print("verbose logging enabled")
+			// osbuild/images still partially uses logrus, so enable it here as well
+			logrus.SetLevel(logrus.DebugLevel)
+			logrus.SetOutput(os.Stderr)
+			logrus.Debug("legacy logrus logging enabled")
+			// XXX: add once images has olog support, and drop logrus
+			//images_log.SetDefault(log.New(os.Stderr, "", 0))
+		}
+		return nil
 	}
 
 	return rootCmd.Execute()
