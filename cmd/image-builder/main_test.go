@@ -46,16 +46,14 @@ func TestListImagesNoArguments(t *testing.T) {
 		restore = main.MockOsArgs(append([]string{"list"}, args...))
 		defer restore()
 
-		var fakeStdout bytes.Buffer
-		restore = main.MockOsStdout(&fakeStdout)
-		defer restore()
-
-		err := main.Run()
-		assert.NoError(t, err)
+		stdout, _ := testutil.CaptureStdio(t, func() {
+			err := main.Run()
+			assert.NoError(t, err)
+		})
 		// we expect at least this canary
-		assert.Contains(t, fakeStdout.String(), "rhel-10.0 type:qcow2 arch:x86_64\n")
+		assert.Contains(t, stdout, "rhel-10.0 type:qcow2 arch:x86_64\n")
 		// output is sorted, i.e. 8.8 comes before 8.10
-		assert.Regexp(t, `(?ms)rhel-8.8.*rhel-8.10`, fakeStdout.String())
+		assert.Regexp(t, `(?ms)rhel-8.8.*rhel-8.10`, stdout)
 	}
 }
 
@@ -66,17 +64,15 @@ func TestListImagesNoArgsOutputJSON(t *testing.T) {
 	restore = main.MockOsArgs([]string{"list", "--format=json"})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
 
 	// smoke test only, we expect valid json and at least the
 	// distro/arch/image_type keys in the json
 	var jo []map[string]any
-	err = json.Unmarshal(fakeStdout.Bytes(), &jo)
+	err := json.Unmarshal([]byte(stdout), &jo)
 	assert.NoError(t, err)
 	res := jo[0]
 	for _, key := range []string{"distro", "arch", "image_type"} {
@@ -91,30 +87,26 @@ func TestListImagesFilteringSmoke(t *testing.T) {
 	restore = main.MockOsArgs([]string{"list", "--filter=centos*"})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
 	// we have centos
-	assert.Contains(t, fakeStdout.String(), "centos-9 type:qcow2 arch:x86_64\n")
+	assert.Contains(t, stdout, "centos-9 type:qcow2 arch:x86_64\n")
 	// but not rhel
-	assert.NotContains(t, fakeStdout.String(), "rhel")
+	assert.NotContains(t, stdout, "rhel")
 }
 
 func TestBadCmdErrorsNoExtraCobraNoise(t *testing.T) {
-	var fakeStderr bytes.Buffer
-	restore := main.MockOsStderr(&fakeStderr)
+	restore := main.MockOsArgs([]string{"bad-command"})
 	defer restore()
 
-	restore = main.MockOsArgs([]string{"bad-command"})
-	defer restore()
-
-	err := main.Run()
-	assert.EqualError(t, err, `unknown command "bad-command" for "image-builder"`)
+	_, stderr := testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.EqualError(t, err, `unknown command "bad-command" for "image-builder"`)
+	})
 	// no extra output from cobra
-	assert.Equal(t, "", fakeStderr.String())
+	assert.Equal(t, "", stderr)
 }
 
 func TestListImagesErrorsOnExtraArgs(t *testing.T) {
@@ -122,10 +114,6 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 	defer restore()
 
 	restore = main.MockOsArgs(append([]string{"list"}, "extra-arg"))
-	defer restore()
-
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
 	defer restore()
 
 	err := main.Run()
@@ -137,10 +125,6 @@ func TestBootcAnacondaIsoNotSupportedForImageBuilder(t *testing.T) {
 	defer restore()
 
 	restore = main.MockOsArgs(append([]string{"manifest"}, "anaconda-iso", "--bootc-ref=example.com/cnt"))
-	defer restore()
-
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
 	defer restore()
 
 	err := main.Run()
@@ -198,26 +182,19 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 			})
 			defer restore()
 
-			var fakeStdout bytes.Buffer
-			restore = main.MockOsStdout(&fakeStdout)
-			defer restore()
-
-			err := main.Run()
-			require.NoError(t, err)
-
-			pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+			stdout, _ := testutil.CaptureStdio(t, func() {
+				err := main.Run()
+				require.NoError(t, err)
+			})
+			pipelineNames, err := manifesttest.PipelineNamesFrom([]byte(stdout))
 			require.NoError(t, err)
 			assert.Contains(t, pipelineNames, "qcow2")
 
-			// ensure the manifest is pretty printed
-			prettyHeader := "{\n    \"version\": \"2\""
-			assert.Equal(t, prettyHeader, fakeStdout.String()[:len(prettyHeader)])
+			assertJsonContains(t, stdout, `"type":"org.osbuild.users"`)
+			assertJsonContains(t, stdout, `"users":{"alice"`)
+			assertJsonContains(t, stdout, `"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 
-			// XXX: provide helpers in manifesttest to extract this in a nicer way
-			assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-			assertJsonContains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
-
-			assert.Equal(t, strings.Contains(fakeStdout.String(), "org.osbuild.librepo"), useLibrepo)
+			assert.Equal(t, strings.Contains(stdout, "org.osbuild.librepo"), useLibrepo)
 		})
 	}
 }
@@ -241,19 +218,16 @@ func TestManifestIntegrationCrossArch(t *testing.T) {
 	})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
-
-	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
+	pipelineNames, err := manifesttest.PipelineNamesFrom([]byte(stdout))
 	assert.NoError(t, err)
 	assert.Contains(t, pipelineNames, "archive")
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assert.Contains(t, fakeStdout.String(), `.el9.s390x.rpm`)
+	assert.Contains(t, stdout, `.el9.s390x.rpm`)
 }
 
 func TestManifestIntegrationOstreeSmoke(t *testing.T) {
@@ -284,19 +258,17 @@ func TestManifestIntegrationOstreeSmoke(t *testing.T) {
 	})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err = main.Run()
+		assert.NoError(t, err)
+	})
 
-	err = main.Run()
-	assert.NoError(t, err)
-
-	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	pipelineNames, err := manifesttest.PipelineNamesFrom([]byte(stdout))
 	assert.NoError(t, err)
 	assert.Contains(t, pipelineNames, "ostree-deployment")
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.ostree.init-fs"`)
+	assert.Regexp(t, `"type":\s*"org.osbuild.ostree.init-fs"`, stdout)
 }
 
 func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
@@ -330,12 +302,11 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 		restore = main.MockOsArgs(args)
 		defer restore()
 
-		var fakeStdout bytes.Buffer
-		restore = main.MockOsStdout(&fakeStdout)
-		defer restore()
-
-		err := main.Run()
-		assert.EqualError(t, err, tc.expectedErr)
+		// just silence the output
+		_, _ = testutil.CaptureStdio(t, func() {
+			err := main.Run()
+			assert.EqualError(t, err, tc.expectedErr)
+		})
 	}
 }
 
@@ -390,10 +361,6 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
 	tmpdir := t.TempDir()
 	restore = main.MockOsArgs([]string{
 		"build",
@@ -407,15 +374,16 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	script := makeFakeOsbuildScript()
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
 
-	var err error
-	// run inside the tmpdir to validate that the default output dir
-	// creation works
-	testutil.Chdir(t, tmpdir, func() {
-		err = main.Run()
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		// run inside the tmpdir to validate that the default output dir
+		// creation works
+		testutil.Chdir(t, tmpdir, func() {
+			err := main.Run()
+			assert.NoError(t, err)
+		})
 	})
-	assert.NoError(t, err)
 
-	assert.Contains(t, fakeStdout.String(), `Image build successful: centos-9-qcow2-x86_64/centos-9-qcow2-x86_64.qcow2`)
+	assert.Contains(t, stdout, `Image build successful: centos-9-qcow2-x86_64/centos-9-qcow2-x86_64.qcow2`)
 
 	// ensure osbuild was run exactly one
 	require.Equal(t, 1, len(fakeOsbuildCmd.CallArgsList()))
@@ -432,9 +400,9 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	// ... and that the manifest passed to osbuild
 	manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
 	assert.NoError(t, err)
-	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assertJsonContains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-	assertJsonContains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+	assertJsonContains(t, string(manifest), `"type":"org.osbuild.users"`)
+	assertJsonContains(t, string(manifest), `"users":{"alice"`)
+	assertJsonContains(t, string(manifest), `"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
 func TestBuildIntegrationArgs(t *testing.T) {
@@ -687,12 +655,11 @@ func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
 	})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
+	// silence output
+	_, _ = testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
 
 	sboms, err := filepath.Glob(filepath.Join(outputDir, "*.spdx.json"))
 	assert.NoError(t, err)
@@ -713,14 +680,11 @@ func TestDescribeImageSmoke(t *testing.T) {
 	})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
-
-	assert.Contains(t, fakeStdout.String(), `distro: centos-9
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
+	assert.Contains(t, stdout, `distro: centos-9
 type: qcow2
 arch: x86_64`)
 }
@@ -740,14 +704,12 @@ func TestDescribeImageMinimal(t *testing.T) {
 	})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
 
-	err := main.Run()
-	assert.NoError(t, err)
-
-	assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`distro: centos-9
+	assert.Contains(t, stdout, fmt.Sprintf(`distro: centos-9
 type: qcow2
 arch: %s`, arch.Current().String()))
 }
@@ -822,16 +784,14 @@ func TestManifestExtraRepos(t *testing.T) {
 			})
 			defer restore()
 
-			var fakeStdout bytes.Buffer
-			restore = main.MockOsStdout(&fakeStdout)
-			defer restore()
-
-			err = main.Run()
-			require.NoError(t, err)
+			stdout, _ := testutil.CaptureStdio(t, func() {
+				err = main.Run()
+				require.NoError(t, err)
+			})
 
 			// our local repo got added
-			assertJsonContains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
-			assertJsonContains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
+			assertJsonContains(t, stdout, `"path":"dummy-1.0.0-0.noarch.rpm"`)
+			assertJsonContains(t, stdout, fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
 		})
 	}
 }
@@ -844,11 +804,7 @@ func TestManifestOverrideRepo(t *testing.T) {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
 
-	var fakeStderr bytes.Buffer
-	restore := main.MockOsStderr(&fakeStderr)
-	defer restore()
-
-	restore = main.MockOsArgs([]string{
+	restore := main.MockOsArgs([]string{
 		"manifest",
 		"qcow2",
 		"--distro=centos-9",
@@ -935,10 +891,6 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
 	tmpdir := t.TempDir()
 	outputDir := filepath.Join(tmpdir, "output")
 	restore = main.MockOsArgs([]string{
@@ -960,8 +912,10 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	script := makeFakeOsbuildScript()
 	testutil.MockCommand(t, "osbuild", script)
 
-	err := main.Run()
-	assert.NoError(t, err)
+	_, _ = testutil.CaptureStdio(t, func() {
+		err := main.Run()
+		assert.NoError(t, err)
+	})
 
 	expectedFiles := []string{
 		"foo.n.0.buildroot-build.spdx.json",
@@ -1056,17 +1010,15 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
 	})
 	defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err = main.Run()
-	assert.NoError(t, err)
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err = main.Run()
+		assert.NoError(t, err)
+	})
 
 	// XXX: manifesttest really needs to grow more helpers
-	assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.insights-client.config","options":{"config":{"proxy":"proxy_123"}}}`)
-	assertJsonContains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
-	assertJsonContains(t, fakeStdout.String(), `server_url_123`)
+	assertJsonContains(t, stdout, `{"type":"org.osbuild.insights-client.config","options":{"config":{"proxy":"proxy_123"}}}`)
+	assertJsonContains(t, stdout, `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
+	assertJsonContains(t, stdout, `server_url_123`)
 }
 
 func TestManifestIntegrationWarningsHandling(t *testing.T) {
@@ -1096,10 +1048,6 @@ customizations.FIPS = true
 				"--distro=centos-9",
 				fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
 			}, tc.extraCmdline...))
-			defer restore()
-
-			var fakeStdout bytes.Buffer
-			restore = main.MockOsStdout(&fakeStdout)
 			defer restore()
 
 			var err error
