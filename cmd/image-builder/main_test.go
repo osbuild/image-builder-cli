@@ -268,7 +268,7 @@ func TestManifestIntegrationOstreeSmoke(t *testing.T) {
 	assert.Contains(t, pipelineNames, "ostree-deployment")
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assert.Contains(t, stdout, `{"type":"org.osbuild.ostree.init-fs"`)
+	assert.Regexp(t, `"type":\s*"org.osbuild.ostree.init-fs"`, stdout)
 }
 
 func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
