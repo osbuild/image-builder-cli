@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/osbuild/images/data/repositories"
+	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
+
+	"github.com/osbuild/image-builder-cli/internal/dnfparse"
 )
 
 // defaultRepoDirs contains the default search paths to look for
@@ -36,6 +38,40 @@ func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 		}
 		if baseURL.Scheme == "" {
 			return nil, fmt.Errorf(`scheme missing in %q, please prefix with e.g. file:// or https://`, repoURL)
+		}
+
+		// file:// path to a .repo file: parse as DNF repo file and append each repo
+		if baseURL.Scheme == "file" && baseURL.Host == "" {
+			path := baseURL.Path
+			if path == "" {
+				return nil, fmt.Errorf("file URL has no path: %q", repoURL)
+			}
+			info, err := os.Stat(path)
+			if err == nil && info.Mode().IsRegular() {
+				parsed, err := dnfparse.ParseFile(path)
+				if err != nil {
+					return nil, fmt.Errorf("parse repo file %q: %w", repoURL, err)
+				}
+				for _, repo := range parsed {
+					name := repo.Name
+					if name == "" {
+						name = repo.Id
+					}
+					repoConf = append(repoConf, rpmmd.RepoConfig{
+						Id:            fmt.Sprintf("%s-repo-%d-%s", what, i, repo.Id),
+						Name:          name,
+						BaseURLs:      repo.BaseURLs,
+						CheckGPG:      repo.CheckGPG,
+						CheckRepoGPG:  repo.CheckRepoGPG,
+						GPGKeys:       repo.GPGKeys,
+						SSLCACert:     repo.SSLCACert,
+						SSLClientCert: repo.SSLClientCert,
+						SSLClientKey:  repo.SSLClientKey,
+						IgnoreSSL:     repo.IgnoreSSL,
+					})
+				}
+				continue
+			}
 		}
 
 		// TODO: to support gpg checking we will need to add signing keys.
