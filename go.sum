@@ -287,10 +287,10 @@ github.com/opencontainers/runtime-spec v1.2.1 h1:S4k4ryNgEpxW1dzyqffOmhI1BHYcjzU
 github.com/opencontainers/runtime-spec v1.2.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.12.0 h1:6n5JV4Cf+4y0KNXW48TLj5DwfXpvWlxXplUkdTrmPb8=
 github.com/opencontainers/selinux v1.12.0/go.mod h1:BTPX+bjVbWGXw7ZZWUbdENt8w0htPSrlgOOysQaU62U=
-github.com/osbuild/blueprint v1.25.0 h1:GdTaL0fdlmQ3RTc6Qsl0AZh/0E2xo9WVCC5ilNARO+8=
-github.com/osbuild/blueprint v1.25.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
-github.com/osbuild/images v0.248.0 h1:Jz7IqZ+xjcyn8TANKb+5T6ZsUEE2qEZWUCHZh7obbrk=
-github.com/osbuild/images v0.248.0/go.mod h1:Gb6Jm8ODGKLMm18REbyll/PcXuSbkUqsbNHZeS5nkNw=
+github.com/osbuild/blueprint v1.26.0 h1:OIXnlrPh2wcmuw3ZKfxTuXS4T0MHbFWSWF7AarWd220=
+github.com/osbuild/blueprint v1.26.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
+github.com/osbuild/images v0.252.0 h1:2/VKA6sjf8QzqKDxHBie6m82fFFLumz6BE46hBA+ObU=
+github.com/osbuild/images v0.252.0/go.mod h1:Wq/bMjrzTBCn0S+wn6AZ0eqA3vRAy4TYOw5bXDnOlmk=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
