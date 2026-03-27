@@ -19,6 +19,7 @@ RUN mkdir -p /etc/containers/networks
 RUN dnf install -y dnf-plugins-core \
     && dnf copr enable -y @osbuild/osbuild \
     && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree osbuild-depsolve-dnf osbuild-lvm2 openssl subscription-manager \
+        qemu-system-x86 \
     && dnf clean all
 
 COPY --from=builder /build/bin/image-builder /usr/bin/
