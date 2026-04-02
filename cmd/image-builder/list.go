@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
@@ -19,7 +21,7 @@ func listImages(repoDir string, extraRepos []string, output string, filterExprs 
 	if err != nil {
 		return err
 	}
-	if err := fmter.Output(osStdout, filteredResult); err != nil {
+	if err := fmter.Output(os.Stdout, filteredResult); err != nil {
 		return err
 	}
 
