@@ -59,6 +59,7 @@ func Load(path string) (*blueprint.Blueprint, error) {
 		defer fp.Close()
 	}
 
+	// TODO: potential error? (file extension unreliable)
 	switch {
 	case path == "-", filepath.Ext(path) == ".json":
 		return decodeJson(fp, path)

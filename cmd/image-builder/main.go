@@ -145,7 +145,7 @@ type cmdManifestWrapperOptions struct {
 // used in tests
 var manifestgenDepsolver manifestgen.DepsolveFunc
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, imageFormat ImageModel.CLIOutputFormat, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
 	if wrapperOpts == nil {
 		wrapperOpts = &cmdManifestWrapperOptions{}
 	}
@@ -276,16 +276,15 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		distroStr = "bootc-based"
 	}
 
-	imgTypeStr := args[0]
 	pbar.SetPulseMsgf("Manifest generation step")
-	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
+	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imageFormat)
 
 	var img *imagefilter.Result
 	if bootcRef != "" {
 		// The behavior of anaconda-iso without special mTLS setup is different
 		// from bib so instead of introducing subtle incompatibilities just error
 		// here
-		if imgTypeStr == "anaconda-iso" {
+		if imageFormat == "anaconda-iso" {
 			return nil, fmt.Errorf(`image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
 		}
 		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef)
@@ -312,7 +311,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		if err != nil {
 			return nil, err
 		}
-		imgType, err := archi.GetImageType(imgTypeStr)
+		imgType, err := archi.GetImageType(string(imageFormat))
 		if err != nil {
 			return nil, err
 		}
@@ -327,7 +326,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			ExtraRepos: extraRepos,
 			ForceRepos: forceRepos,
 		}
-		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
+		img, err = getOneImage(distroStr, imageFormat, archStr, repoOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -362,17 +361,17 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if opts.ManifestgenOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
-	return nil, nil
-	err = generateManifest(repoDir, extraRepos, img, w, opts)
+	// err = generateManifest(repoDir, extraRepos, img, w, opts)
 	return img, err
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
+	imageFormat := ImageModel.CLIOutputFormat(args[0])
 	pbar, err := progress.New("")
 	if err != nil {
 		return err
 	}
-	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, io.Discard, nil)
+	_, err = cmdManifestWrapper(pbar, cmd, imageFormat, osStdout, io.Discard, nil)
 	return err
 }
 
@@ -393,6 +392,7 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
+	imageFormat := ImageModel.CLIOutputFormat(args[0])
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
 		return err
@@ -447,7 +447,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	// We discard any warnings from the depsolver until we figure out a better
 	// idea (likely in manifestgen)
-	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, io.Discard, opts)
+	res, err := cmdManifestWrapper(pbar, cmd, imageFormat, &mf, io.Discard, opts)
 	if err != nil {
 		return err
 	}
@@ -521,7 +521,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	imgTypeStr := args[0]
+	imgTypeStr := ImageModel.CLIOutputFormat(args[0])
 	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{RepoDir: repoDir})
 	if err != nil {
 		return err
@@ -613,7 +613,18 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Short:        "Build manifest for the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
-		Args:         cobra.ExactArgs(1),
+		Args:         func(cmd *cobra.Command, args []string) error {
+				if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+					return err
+				}
+				for _, format := range ImageModel.AllCLIOutputFormats {
+					if ImageModel.CLIOutputFormat(args[0]) == format {
+						return nil
+					}
+				}
+				// TODO: how do I put array of possible options here?
+				return fmt.Errorf("Invalid image format argument %s", args[0])
+			},
 		Hidden:       true,
 	}
 	manifestCmd.Flags().String("blueprint", "", `filename of a blueprint to customize an image`)
@@ -703,7 +714,18 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Short:        "Describe the given image-type, e.g. qcow2 (tip: combine with --distro,--arch)",
 		RunE:         cmdDescribeImg,
 		SilenceUsage: true,
-		Args:         cobra.ExactArgs(1),
+		Args:         func(cmd *cobra.Command, args []string) error {
+				if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+					return err
+				}
+				for _, format := range ImageModel.AllCLIOutputFormats {
+					if ImageModel.CLIOutputFormat(args[0]) == format {
+						return nil
+					}
+				}
+				// TODO: how do I put array of possible options here?
+				return fmt.Errorf("Invalid image format argument %s", args[0])
+			},
 		Hidden:       false,
 		Aliases:      []string{"describe-image"},
 	}

@@ -8,6 +8,8 @@ import (
 
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/imagefilter"
+
+	ImageModel "github.com/osbuild/image-builder-cli/pkg/image_model"
 )
 
 func newImageFilterDefault(repoDir string, extraRepos []string) (*imagefilter.ImageFilter, error) {
@@ -33,7 +35,7 @@ type repoOptions struct {
 }
 
 // should this be moved to images:imagefilter?
-func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) (*imagefilter.Result, error) {
+func getOneImage(distroName string, imgFormat ImageModel.CLIOutputFormat, archStr string, repoOpts *repoOptions) (*imagefilter.Result, error) {
 	if repoOpts == nil {
 		repoOpts = &repoOptions{}
 	}
@@ -45,11 +47,14 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 	// strip prefixes to make ib copy/paste friendly when pasting output
 	// from "list"
 	distroName = strings.TrimPrefix(distroName, "distro:")
-	imgTypeStr = strings.TrimPrefix(imgTypeStr, "type:")
+	// Not needed anymore, because validation was done earlier?
+	// imgTypeStr = strings.TrimPrefix(imgTypeStr, "type:")
 	archStr = strings.TrimPrefix(archStr, "arch:")
 
+	// imgFormat check not needed anymore, because validation was done earlier?
+	// for _, s := range []string{distroName, imgFormat, archStr} {
 	// error early when globs are used
-	for _, s := range []string{distroName, imgTypeStr, archStr} {
+	for _, s := range []string{distroName, archStr} {
 		if glob.QuoteMeta(s) != s {
 			return nil, fmt.Errorf("cannot use globs in %q when getting a single image", s)
 		}
@@ -58,7 +63,7 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 	filterExprs := []string{
 		fmt.Sprintf("distro:%s", distroName),
 		fmt.Sprintf("arch:%s", archStr),
-		fmt.Sprintf("type:%s", imgTypeStr),
+		fmt.Sprintf("type:%s", imgFormat),
 	}
 	filteredResults, err := imageFilter.Filter(filterExprs...)
 	if err != nil {
@@ -66,7 +71,7 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 	}
 	switch len(filteredResults) {
 	case 0:
-		return nil, fmt.Errorf("cannot find image for: distro:%q type:%q arch:%q", distroName, imgTypeStr, archStr)
+		return nil, fmt.Errorf("cannot find image for: distro:%q type:%q arch:%q", distroName, imgFormat, archStr)
 	case 1:
 		return &filteredResults[0], nil
 	default:
@@ -74,7 +79,7 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 		// disallow globs above.
 		// XXX: imagefilter.Result should have a String() method so
 		// that this output can actually show the results
-		return nil, fmt.Errorf("internal error: found %v results for %q %q %q", len(filteredResults), distroName, imgTypeStr, archStr)
+		return nil, fmt.Errorf("internal error: found %v results for %q %q %q", len(filteredResults), distroName, imgFormat, archStr)
 	}
 }
 
