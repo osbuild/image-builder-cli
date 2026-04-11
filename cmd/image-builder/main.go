@@ -30,6 +30,7 @@ import (
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 	"github.com/osbuild/image-builder-cli/internal/olog"
 	"github.com/osbuild/image-builder-cli/pkg/setup"
+	ImageModel "github.com/osbuild/image-builder-cli/pkg/image_model"
 )
 
 var (
@@ -392,8 +393,6 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
-	fmt.Println("reached here-------")
-	fmt.Println("reached here-------")
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
 		return err
@@ -667,7 +666,21 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Short:        "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
 		RunE:         cmdBuild,
 		SilenceUsage: true,
-		Args:         cobra.ExactArgs(1),
+		Args:         func(cmd *cobra.Command, args []string) error {
+				if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+					return err
+				}
+				for _, format := range ImageModel.AllCLIOutputFormats {
+					if ImageModel.CLIOutputFormat(args[0]) == format {
+						return nil
+					}
+				}
+				// TODO: how do I put array of possible options here?
+				return fmt.Errorf("Invalid image format argument %s", args[0])
+			},
+		// TODO: that seems to help with completion, but not nicer error message
+		// ValidArgsFunction: func (cmd *cobra.Command)  {
+		// },
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
