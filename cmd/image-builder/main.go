@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
+	"github.com/osbuild/image-builder-cli/pkg/validation"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -29,8 +30,8 @@ import (
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 	"github.com/osbuild/image-builder-cli/internal/olog"
-	"github.com/osbuild/image-builder-cli/pkg/setup"
 	ImageModel "github.com/osbuild/image-builder-cli/pkg/image_model"
+	"github.com/osbuild/image-builder-cli/pkg/setup"
 )
 
 var (
@@ -393,6 +394,20 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
 	imageFormat := ImageModel.CLIOutputFormat(args[0])
+
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
+	if err == nil {
+		bp, err := blueprintload.Load(blueprintPath)
+		if err != nil {
+			return err
+		}
+		result := validation.CustomizationConflicts(imageFormat, bp.Customizations)
+		if !result.Ok {
+			return errors.New(result.Message)
+		}
+	}
+
+
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
 		return err
