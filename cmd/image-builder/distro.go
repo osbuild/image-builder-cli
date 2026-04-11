@@ -8,6 +8,7 @@ import (
 
 var distroGetHostDistroName = distro.GetHostDistroName
 
+// TODO-witcher: does it verify if requested distro available?
 // findDistro will ensure that the given distro argument do not
 // diverge. If no distro is set via the blueprint or the argument
 // the host is used to derive the distro.

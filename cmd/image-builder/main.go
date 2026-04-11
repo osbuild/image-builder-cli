@@ -361,6 +361,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if opts.ManifestgenOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
+	return nil, nil
 	err = generateManifest(repoDir, extraRepos, img, w, opts)
 	return img, err
 }
@@ -391,6 +392,8 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
+	fmt.Println("reached here-------")
+	fmt.Println("reached here-------")
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
 		return err
@@ -419,9 +422,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	// Setup osbuild environment if running in a container
 	if setup.IsContainer() {
-		if err := setup.EnsureEnvironment(cacheDir, false); err != nil {
-			return fmt.Errorf("entrypoint setup failed: %w", err)
-		}
+		fmt.Println("got in container statement-----")
+		// if err := setup.EnsureEnvironment(cacheDir, false); err != nil {
+		// 	return fmt.Errorf("entrypoint setup failed: %w", err)
+		// }
 	}
 
 	pbar, err := progressFromCmd(cmd)
@@ -476,6 +480,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		Metrics:        withMetrics,
 	}
 	pbar.SetPulseMsgf("Image building step")
+	return nil
 	imagePath, err := buildImage(pbar, res, mf.Bytes(), buildOpts)
 	if err != nil {
 		return err
@@ -581,6 +586,16 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
+
+	witcherCmd := &cobra.Command{
+		Use:          "witcher",
+		Short:        "List buildable images, use --filter to limit further",
+		Run:         func(cmd *cobra.Command, args []string) {
+			fmt.Print("hihihihi")
+		},
+		Args:         cobra.NoArgs,
+	}
+	rootCmd.AddCommand(witcherCmd)
 
 	listCmd := &cobra.Command{
 		Use:          "list",
@@ -693,6 +708,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		ilog.SetDefault(log.New(os.Stderr, "", 0))
 	}
 
+	fmt.Println("gello there-----")
 	return rootCmd.Execute()
 }
 
