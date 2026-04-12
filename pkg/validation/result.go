@@ -8,7 +8,6 @@ const (
 )
 
 type ValidationResult struct {
-	Ok bool
 	Level Level
 	Message string
 }

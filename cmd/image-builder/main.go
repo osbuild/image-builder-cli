@@ -392,21 +392,38 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 	return progress.New(progressType)
 }
 
-func cmdBuild(cmd *cobra.Command, args []string) error {
-	imageFormat := ImageModel.CLIOutputFormat(args[0])
-
-	blueprintPath, err := cmd.Flags().GetString("blueprint")
-	if err == nil {
+func buildValidation(cmd *cobra.Command, args []string) error {
+	if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+		return err
+	}
+	imageFormatStr := args[0]
+	if err := validation.ValidateImageFormat(imageFormatStr); err != nil {
+		return err
+	}
+	imageFormat := ImageModel.CLIOutputFormat(imageFormatStr)
+	if blueprintPath, err := cmd.Flags().GetString("blueprint"); err == nil {
 		bp, err := blueprintload.Load(blueprintPath)
 		if err != nil {
 			return err
 		}
-		result := validation.CustomizationConflicts(imageFormat, bp.Customizations)
-		if !result.Ok {
-			return errors.New(result.Message)
+		failOnWarning, err := cmd.Flags().GetBool("require-optimal-configuration")
+		if err != nil {
+			return err
+		}
+		err, warnings := validation.CustomizationConflicts(imageFormat, bp.Customizations, failOnWarning)
+		if err != nil {
+			return err
+		}
+		if len(warnings) > 0 {
+			// TODO: print warnings
 		}
 	}
 
+	return nil
+}
+
+func cmdBuild(cmd *cobra.Command, args []string) error {
+	imageFormat := ImageModel.CLIOutputFormat(args[0])
 
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
@@ -602,12 +619,12 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.SetErr(osStderr)
 
 	witcherCmd := &cobra.Command{
-		Use:          "witcher",
-		Short:        "List buildable images, use --filter to limit further",
-		Run:         func(cmd *cobra.Command, args []string) {
+		Use:   "witcher",
+		Short: "List buildable images, use --filter to limit further",
+		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Print("hihihihi")
 		},
-		Args:         cobra.NoArgs,
+		Args: cobra.NoArgs,
 	}
 	rootCmd.AddCommand(witcherCmd)
 
@@ -628,19 +645,19 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Short:        "Build manifest for the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
-		Args:         func(cmd *cobra.Command, args []string) error {
-				if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-					return err
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return err
+			}
+			for _, format := range ImageModel.AllCLIOutputFormats {
+				if ImageModel.CLIOutputFormat(args[0]) == format {
+					return nil
 				}
-				for _, format := range ImageModel.AllCLIOutputFormats {
-					if ImageModel.CLIOutputFormat(args[0]) == format {
-						return nil
-					}
-				}
-				// TODO: how do I put array of possible options here?
-				return fmt.Errorf("Invalid image format argument %s", args[0])
-			},
-		Hidden:       true,
+			}
+			// TODO: how do I put array of possible options here?
+			return fmt.Errorf("Invalid image format argument %s", args[0])
+		},
+		Hidden: true,
 	}
 	manifestCmd.Flags().String("blueprint", "", `filename of a blueprint to customize an image`)
 	manifestCmd.Flags().Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
@@ -692,23 +709,13 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Short:        "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
 		RunE:         cmdBuild,
 		SilenceUsage: true,
-		Args:         func(cmd *cobra.Command, args []string) error {
-				if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-					return err
-				}
-				for _, format := range ImageModel.AllCLIOutputFormats {
-					if ImageModel.CLIOutputFormat(args[0]) == format {
-						return nil
-					}
-				}
-				// TODO: how do I put array of possible options here?
-				return fmt.Errorf("Invalid image format argument %s", args[0])
-			},
+		Args: buildValidation,
 		// TODO: that seems to help with completion, but not nicer error message
 		// ValidArgsFunction: func (cmd *cobra.Command)  {
 		// },
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
+	buildCmd.Flags().Bool("require-optimal-configuration", false, `throw error if provided flags or configs implicitly overwrite each other`)
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
 	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
@@ -729,20 +736,20 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Short:        "Describe the given image-type, e.g. qcow2 (tip: combine with --distro,--arch)",
 		RunE:         cmdDescribeImg,
 		SilenceUsage: true,
-		Args:         func(cmd *cobra.Command, args []string) error {
-				if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-					return err
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return err
+			}
+			for _, format := range ImageModel.AllCLIOutputFormats {
+				if ImageModel.CLIOutputFormat(args[0]) == format {
+					return nil
 				}
-				for _, format := range ImageModel.AllCLIOutputFormats {
-					if ImageModel.CLIOutputFormat(args[0]) == format {
-						return nil
-					}
-				}
-				// TODO: how do I put array of possible options here?
-				return fmt.Errorf("Invalid image format argument %s", args[0])
-			},
-		Hidden:       false,
-		Aliases:      []string{"describe-image"},
+			}
+			// TODO: how do I put array of possible options here?
+			return fmt.Errorf("Invalid image format argument %s", args[0])
+		},
+		Hidden:  false,
+		Aliases: []string{"describe-image"},
 	}
 	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
 	describeImgCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
