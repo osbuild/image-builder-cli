@@ -8,7 +8,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
-	github.com/mattn/go-isatty v0.0.20
+	github.com/mattn/go-isatty v0.0.22
 	github.com/osbuild/blueprint v1.29.0
 	github.com/osbuild/images v0.259.1-0.20260421093556-f7552972c92c
 	github.com/sirupsen/logrus v1.9.4
