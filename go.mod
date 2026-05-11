@@ -9,8 +9,8 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/gobwas/glob v0.2.3
 	github.com/mattn/go-isatty v0.0.22
-	github.com/osbuild/blueprint v1.29.0
-	github.com/osbuild/images v0.262.0
+	github.com/osbuild/blueprint v1.30.0
+	github.com/osbuild/images v0.263.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -133,6 +133,7 @@ require (
 	github.com/sigstore/sigstore v1.9.5 // indirect
 	github.com/smallstep/pkcs7 v0.1.1 // indirect
 	github.com/stefanberger/go-pkcs11uri v0.0.0-20230803200340-78284954bff6 // indirect
+	github.com/supakeen/yamlplus v1.1.0 // indirect
 	github.com/sylabs/sif/v2 v2.21.1 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.3 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
