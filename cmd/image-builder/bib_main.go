@@ -32,9 +32,9 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 
-	"github.com/osbuild/image-builder-cli/internal/bibimg"
-	"github.com/osbuild/image-builder-cli/pkg/progress"
-	"github.com/osbuild/image-builder-cli/pkg/setup"
+	"github.com/osbuild/image-builder/internal/bibimg"
+	"github.com/osbuild/image-builder/pkg/progress"
+	"github.com/osbuild/image-builder/pkg/setup"
 )
 
 var (

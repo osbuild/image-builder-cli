@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/osbuild/image-builder-cli/pkg/progress"
+	"github.com/osbuild/image-builder/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -28,9 +28,9 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 
-	"github.com/osbuild/image-builder-cli/internal/blueprintload"
-	"github.com/osbuild/image-builder-cli/internal/olog"
-	"github.com/osbuild/image-builder-cli/pkg/setup"
+	"github.com/osbuild/image-builder/internal/blueprintload"
+	"github.com/osbuild/image-builder/internal/olog"
+	"github.com/osbuild/image-builder/pkg/setup"
 )
 
 var (

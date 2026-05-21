@@ -24,8 +24,8 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
-	"github.com/osbuild/image-builder-cli/internal/testutil"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
+	"github.com/osbuild/image-builder/internal/testutil"
 	"github.com/osbuild/images/pkg/arch"
 )
 

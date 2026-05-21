@@ -16,8 +16,8 @@ import (
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/platform"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
-	"github.com/osbuild/image-builder-cli/internal/testutil"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
+	"github.com/osbuild/image-builder/internal/testutil"
 )
 
 func TestUploadWithAWSMock(t *testing.T) {

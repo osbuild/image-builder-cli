@@ -12,7 +12,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/osbuild/image-builder-cli/pkg/progress"
+	"github.com/osbuild/image-builder/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"

@@ -1,4 +1,4 @@
-module github.com/osbuild/image-builder-cli
+module github.com/osbuild/image-builder
 
 // keep in sync with images,
 // c.f. https://github.com/osbuild/images/blob/main/go.mod
