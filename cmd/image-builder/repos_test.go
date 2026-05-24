@@ -45,6 +45,59 @@ func TestParseExtraRepoSad(t *testing.T) {
 	assert.EqualError(t, err, `scheme missing in "/just/a/path", please prefix with e.g. file:// or https://`)
 }
 
+func TestParseRepoURLsFileRepo(t *testing.T) {
+	dir := t.TempDir()
+	repoPath := filepath.Join(dir, "test.repo")
+	err := os.WriteFile(repoPath, []byte(`[fedora]
+name=Fedora
+baseurl=https://download.fedoraproject.org/pub/fedora/linux/releases/42/Everything/x86_64/os/
+gpgcheck=1
+repo_gpgcheck=0
+`), 0644)
+	require.NoError(t, err)
+
+	cfg, err := parseRepoURLs([]string{"file://" + repoPath}, "extra")
+	require.NoError(t, err)
+	require.Len(t, cfg, 1)
+	assert.Equal(t, "extra-repo-0-fedora", cfg[0].Id)
+	assert.Equal(t, "Fedora", cfg[0].Name)
+	assert.Equal(t, []string{"https://download.fedoraproject.org/pub/fedora/linux/releases/42/Everything/x86_64/os/"}, cfg[0].BaseURLs)
+	assert.True(t, cfg[0].CheckGPG != nil && *cfg[0].CheckGPG)
+	assert.True(t, cfg[0].CheckRepoGPG != nil && !*cfg[0].CheckRepoGPG)
+}
+
+func TestParseRepoURLsFileRepoWithGPGKey(t *testing.T) {
+	dir := t.TempDir()
+	keyPath := filepath.Join(dir, "RPM-GPG-KEY-test")
+	keyContent := []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----\nxyz\n-----END PGP PUBLIC KEY BLOCK-----")
+	require.NoError(t, os.WriteFile(keyPath, keyContent, 0644))
+
+	repoPath := filepath.Join(dir, "test.repo")
+	err := os.WriteFile(repoPath, []byte(`[myrepo]
+name=My Repo
+baseurl=https://example.com/repo
+gpgcheck=1
+gpgkey=file://`+keyPath+`
+`), 0644)
+	require.NoError(t, err)
+
+	cfg, err := parseRepoURLs([]string{"file://" + repoPath}, "extra")
+	require.NoError(t, err)
+	require.Len(t, cfg, 1)
+	require.Len(t, cfg[0].GPGKeys, 1)
+	assert.Equal(t, string(keyContent), cfg[0].GPGKeys[0])
+}
+
+func TestParseRepoURLsFileDirectoryTreatedAsURL(t *testing.T) {
+	// file:// to a directory is not a .repo file: treat as single base-URL repo
+	dir := t.TempDir()
+	cfg, err := parseRepoURLs([]string{"file://" + dir}, "extra")
+	require.NoError(t, err)
+	require.Len(t, cfg, 1)
+	assert.Equal(t, "extra-repo-0", cfg[0].Id)
+	assert.Equal(t, []string{"file://" + dir}, cfg[0].BaseURLs)
+}
+
 func TestNewRepoRegistryImplSmoke(t *testing.T) {
 	registry, err := newRepoRegistryImpl("", nil)
 	require.NoError(t, err)
