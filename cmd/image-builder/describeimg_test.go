@@ -12,7 +12,7 @@ import (
 
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
 )
 
 func TestDescribeImage(t *testing.T) {

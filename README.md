@@ -7,7 +7,7 @@ Build images from the command line in a convenient way.
 ```console
 $ sudo podman run --privileged \
    -v ./output:/output \
-   ghcr.io/osbuild/image-builder-cli:latest \
+   ghcr.io/osbuild/image-builder:latest \
    build \
    --distro fedora-43 \
    minimal-raw
@@ -41,24 +41,24 @@ $ dnf install image-builder
 You can also install `image-builder` via the go build system.
 
 ```console
-$ go run github.com/osbuild/image-builder-cli/cmd/image-builder@main
+$ go run github.com/osbuild/image-builder/cmd/image-builder@main
 ```
 or install it into `$GOPATH/bin`
 ```console
-$ go install github.com/osbuild/image-builder-cli/cmd/image-builder@main
+$ go install github.com/osbuild/image-builder/cmd/image-builder@main
 ```
 
 Lastly you can use a container:
 
 ```console
-$ sudo podman run --privileged ghcr.io/osbuild/image-builder-cli
+$ sudo podman run --privileged ghcr.io/osbuild/image-builder
 ```
 
 When building an image in the container it will be written to `/output` in the container. If you want the produced images available on your host system mount that directory:
 
 ```console
 $ mkdir output
-$ sudo podman run --privileged -v ./output:/output ghcr.io/osbuild/image-builder-cli
+$ sudo podman run --privileged -v ./output:/output ghcr.io/osbuild/image-builder
 ```
 
 ## Compilation
@@ -341,7 +341,7 @@ caution.
 
 ## Subscriptions
 
-When executing `image-builder-cli` via `podman`, subscription information is
+When executing `image-builder` via `podman`, subscription information is
 passed to the container and used to access Red Hat CDN. As long as the host
 machine is properly subscribed with attached Red Hat Enterprise Linux
 subscription, building RHEL images will work automatically.
@@ -376,13 +376,13 @@ A: This is a safety feature so that in e.g. CI systems warnings cannot
 ## Project
 
  * **Website**: <https://www.osbuild.org>
- * **Bug Tracker**: <https://github.com/osbuild/image-builder-cli/issues>
+ * **Bug Tracker**: <https://github.com/osbuild/image-builder/issues>
  * **Discussions**: <https://github.com/orgs/osbuild/discussions>
  * **Matrix (chat)**: [Image Builder channel on Fedora Chat](https://matrix.to/#/#image-builder:fedoraproject.org?web-instance[element.io]=chat.fedoraproject.org)
- * **Changelog**: <https://github.com/osbuild/image-builder-cli/releases>
+ * **Changelog**: <https://github.com/osbuild/image-builder/releases>
 
 ### Repository
 
- - **web**:   <https://github.com/osbuild/image-builder-cli>
- - **https**: `https://github.com/osbuild/image-builder-cli.git`
- - **ssh**:   `git@github.com:osbuild/image-builder-cli.git`
+ - **web**:   <https://github.com/osbuild/image-builder>
+ - **https**: `https://github.com/osbuild/image-builder.git`
+ - **ssh**:   `git@github.com:osbuild/image-builder.git`

@@ -10,7 +10,7 @@
 
 Some of the information here is specific to the Koji instance you're speaking to, if this is the case this is noted in a comment.
 
-As a user you want to `koji-image-builder-cli` package installed on your system which provides a subcommand to your `koji` command to schedule builds. To schedule a build you can use the following command:
+As a user you want to `koji-image-builder` package installed on your system which provides a subcommand to your `koji` command to schedule builds. To schedule a build you can use the following command:
 
 ```
 koji image-builder-build \

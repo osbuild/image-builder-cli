@@ -13,7 +13,7 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 
-	"github.com/osbuild/image-builder-cli/pkg/util"
+	"github.com/osbuild/image-builder/pkg/util"
 )
 
 var (

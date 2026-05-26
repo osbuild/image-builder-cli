@@ -37,7 +37,7 @@ $ sudo podman run \
     --rm \
     -it \
     -v ./output:/output \
-    ghcr.io/osbuild/image-builder-cli:latest \
+    ghcr.io/osbuild/image-builder:latest \
     build --distro fedora-43 minimal-raw-xz
 # ...
 ```
@@ -49,9 +49,9 @@ Another option, and this might be most useful while hacking on the source is to 
 ```console
 $ sudo dnf install go git-core osbuild osbuild-depsolve-dnf osbuild-ostree osbuild-lvm2 osbuild-luks2
 # ...
-$ git clone github.com/osbuild/image-builder-cli
+$ git clone github.com/osbuild/image-builder
 # ...
-$ cd image-builder-cli
+$ cd image-builder
 $ go build ./cmd/image-builder
 # ...
 $ sudo ./image-builder build --distro fedora-43 minimal-raw-xz
