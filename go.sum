@@ -223,8 +223,8 @@ github.com/opencontainers/runtime-spec v1.2.1 h1:S4k4ryNgEpxW1dzyqffOmhI1BHYcjzU
 github.com/opencontainers/runtime-spec v1.2.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/osbuild/blueprint v1.30.0 h1:p8BpF4H5dJtvGCcvDaoyTzEdNVgVoJNh985ZyFKnJtk=
 github.com/osbuild/blueprint v1.30.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
-github.com/osbuild/images v0.269.0 h1:ez31vr1zePgEnEqE7j2nZlEP+86L8ZGQFX/8UjwuyVA=
-github.com/osbuild/images v0.269.0/go.mod h1:EXK897QJxEN8RiBCvHpU4stQKkKWCxNlj1RTwF2zJ50=
+github.com/osbuild/images v0.270.0 h1:elv3G1yTgKBwag+uEEcx7EQViaEmOd7fxC36szR5qq0=
+github.com/osbuild/images v0.270.0/go.mod h1:EXK897QJxEN8RiBCvHpU4stQKkKWCxNlj1RTwF2zJ50=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
