@@ -2,9 +2,9 @@ name: Integration
 
 on:  # yamllint disable-line rule:truthy
   push:
-    branches: ["main"]
+    branches: ["rhel-9.8_10.2"]
   pull_request:
-    branches: ["main"]
+    branches: ["rhel-9.8_10.2"]
   merge_group:
     types: ["checks_requested"]
 

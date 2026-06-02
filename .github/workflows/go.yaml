@@ -5,9 +5,9 @@ name: Go
 
 on:  # yamllint disable-line rule:truthy
   push:
-    branches: ["main"]
+    branches: ["rhel-9.8_10.2"]
   pull_request:
-    branches: ["main"]
+    branches: ["rhel-9.8_10.2"]
   merge_group:
     types: ["checks_requested"]
 
@@ -33,8 +33,8 @@ jobs:
       - name: Install dependencies
         run: |
           # we have the same build-deps as the images library
-          curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/pyproject.toml > pyproject.toml
-          curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/test/scripts/install-dependencies | bash
+          curl -sL https://raw.githubusercontent.com/osbuild/images/v0.246.0/pyproject.toml > pyproject.toml
+          curl -sL https://raw.githubusercontent.com/osbuild/images/v0.246.0/test/scripts/install-dependencies | bash
           # we also need createrepo_c
           dnf install -y createrepo_c
       - name: Check osbuild version
