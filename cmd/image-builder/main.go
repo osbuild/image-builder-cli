@@ -41,6 +41,29 @@ var (
 	bootcResolveInfo           = bootc.ResolveBootcInfo
 )
 
+type setOnceString struct {
+	name string
+	val  string
+	set  bool
+}
+
+func (s *setOnceString) String() string {
+	return s.val
+}
+
+func (s *setOnceString) Set(v string) error {
+	if s.set {
+		return fmt.Errorf("flag %q cannot be set more than once", s.name)
+	}
+	s.val = v
+	s.set = true
+	return nil
+}
+
+func (s *setOnceString) Type() string {
+	return "string"
+}
+
 // cacheDirForUid returns the cache directory for the given uid.
 // When root (uid 0) it uses the system-wide /var/cache path.
 // When non-root it follows the XDG Base Directory specification
@@ -746,7 +769,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Args:         cobra.ExactArgs(1),
 		Hidden:       true,
 	}
-	manifestCmd.Flags().String("blueprint", "", `filename of a blueprint to customize an image`)
+	manifestCmd.Flags().Var(&setOnceString{name: "blueprint"}, "blueprint", `filename of a blueprint to customize an image`)
 	manifestCmd.Flags().Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
 	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
 	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)

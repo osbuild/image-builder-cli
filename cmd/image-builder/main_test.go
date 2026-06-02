@@ -1185,6 +1185,19 @@ image_types:
 	}
 }
 
+func TestBlueprintCannotBeSetTwice(t *testing.T) {
+	restore := main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--blueprint=/dev/null",
+		"--blueprint=/dev/null",
+	})
+	defer restore()
+
+	err := main.Run()
+	require.ErrorContains(t, err, `flag "blueprint" cannot be set more than once`)
+}
+
 func TestCacheDirForUidRoot(t *testing.T) {
 	assert.Equal(t, "/var/cache/image-builder/store", main.CacheDirForUid(0))
 }
