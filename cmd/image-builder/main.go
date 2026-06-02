@@ -703,17 +703,17 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.Flags().Bool("version", false, "Print version information and exit (deprecated: use \"image-builder version\" instead)")
 	rootCmd.Flags().MarkHidden("version")
-	var forceRepoDir string
-	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-repo-dir", "", "Override the default repository search path for custom repository files")
-	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	forceRepoDir := &setOnceString{name: "force-repo-dir"}
+	rootCmd.PersistentFlags().Var(forceRepoDir, "force-repo-dir", "Override the default repository search path for custom repository files")
+	rootCmd.PersistentFlags().Var(forceRepoDir, "force-data-dir", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().MarkDeprecated("force-data-dir", `Use --force-repo-dir instead`)
-	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().Var(forceRepoDir, "data-dir", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-repo-dir instead`)
-	rootCmd.PersistentFlags().String("force-defs-dir", "", "Override the path to load YAML distro definitions from")
+	rootCmd.PersistentFlags().Var(&setOnceString{name: "force-defs-dir"}, "force-defs-dir", "Override the path to load YAML distro definitions from")
 	rootCmd.PersistentFlags().MarkHidden("force-defs-dir")
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
-	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
+	rootCmd.PersistentFlags().Var(&setOnceString{name: "output-dir"}, "output-dir", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
 	registerMemProfileFlags(rootCmd)
 	rootCmd.PersistentPreRun = memProfilePersistentPreRun
@@ -733,9 +733,9 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		RunE:   cmdBootcInspect,
 		Args:   cobra.NoArgs,
 	}
-	bootcInspectCommand.Flags().String("ref", "", `bootc container ref`)
+	bootcInspectCommand.Flags().Var(&setOnceString{name: "ref"}, "ref", `bootc container ref`)
 	_ = bootcInspectCommand.MarkFlagRequired("ref")
-	bootcInspectCommand.Flags().String("format", "", "Output in a specific format (yaml, json)")
+	bootcInspectCommand.Flags().Var(&setOnceString{name: "format"}, "format", "Output in a specific format (yaml, json)")
 	bootcCommand.AddCommand(bootcInspectCommand)
 
 	rootCmd.AddCommand(bootcCommand)
@@ -749,7 +749,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Aliases:      []string{"list-images"},
 	}
 	listCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
-	listCmd.Flags().String("format", "", "Output in a specific format (text, json)")
+	listCmd.Flags().Var(&setOnceString{name: "format"}, "format", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listCmd)
 
 	versionCmd := &cobra.Command{
@@ -758,7 +758,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		RunE:  cmdVersion,
 		Args:  cobra.NoArgs,
 	}
-	versionCmd.Flags().String("format", "", "Output in a specific format (yaml, json)")
+	versionCmd.Flags().Var(&setOnceString{name: "format"}, "format", "Output in a specific format (yaml, json)")
 	rootCmd.AddCommand(versionCmd)
 
 	manifestCmd := &cobra.Command{
@@ -771,15 +771,15 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	manifestCmd.Flags().Var(&setOnceString{name: "blueprint"}, "blueprint", `filename of a blueprint to customize an image`)
 	manifestCmd.Flags().Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
-	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
-	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
-	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
-	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
-	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
-	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
-	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
-	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
-	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
+	manifestCmd.Flags().Var(&setOnceString{name: "arch"}, "arch", `build manifest for a different architecture`)
+	manifestCmd.Flags().Var(&setOnceString{name: "distro"}, "distro", `build manifest for a different distroname (e.g. centos-9)`)
+	manifestCmd.Flags().Var(&setOnceString{name: "ostree-ref"}, "ostree-ref", `OSTREE reference`)
+	manifestCmd.Flags().Var(&setOnceString{name: "ostree-parent"}, "ostree-parent", `OSTREE parent`)
+	manifestCmd.Flags().Var(&setOnceString{name: "ostree-url"}, "ostree-url", `OSTREE url`)
+	manifestCmd.Flags().Var(&setOnceString{name: "bootc-ref"}, "bootc-ref", `bootc container ref`)
+	manifestCmd.Flags().Var(&setOnceString{name: "bootc-build-ref"}, "bootc-build-ref", `bootc build container ref`)
+	manifestCmd.Flags().Var(&setOnceString{name: "bootc-installer-payload-ref"}, "bootc-installer-payload-ref", `bootc installer payload ref`)
+	manifestCmd.Flags().Var(&setOnceString{name: "bootc-default-fs"}, "bootc-default-fs", `default filesystem to use for the bootc install (e.g. ext4)`)
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().MarkHidden("use-librepo")
@@ -787,8 +787,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("with-rpmlist", false, `export RPM list as JSON`)
 	manifestCmd.Flags().MarkHidden("with-rpmlist")
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
-	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
-	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
+	manifestCmd.Flags().Var(&setOnceString{name: "registrations"}, "registrations", `filename of a registrations file with e.g. subscription details`)
+	manifestCmd.Flags().Var(&setOnceString{name: "rpmmd-cache"}, "rpmmd-cache", `osbuild directory to cache rpm metadata`)
 	manifestCmd.Flags().Bool("preview", true, `override distro default preview state if passed`)
 	manifestCmd.Flags().MarkHidden("preview")
 	rootCmd.AddCommand(manifestCmd)
@@ -800,21 +800,21 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
 	}
-	uploadCmd.Flags().String("aws-ami-name", "", "name for the AMI in AWS (only for type=ami)")
-	uploadCmd.Flags().String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for type=ami)")
-	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
-	uploadCmd.Flags().String("aws-profile", "", "name of the AWS credentials profile (only for type=aws)")
+	uploadCmd.Flags().Var(&setOnceString{name: "aws-ami-name"}, "aws-ami-name", "name for the AMI in AWS (only for type=ami)")
+	uploadCmd.Flags().Var(&setOnceString{name: "aws-bucket"}, "aws-bucket", "target S3 bucket name for intermediate storage when creating AMI (only for type=ami)")
+	uploadCmd.Flags().Var(&setOnceString{name: "aws-region"}, "aws-region", "target region for AWS uploads (only for type=ami)")
+	uploadCmd.Flags().Var(&setOnceString{name: "aws-profile"}, "aws-profile", "name of the AWS credentials profile (only for type=aws)")
 	uploadCmd.Flags().StringArray("aws-tag", []string{}, "tag the AMI with this Key=Value (only for type=aws)")
-	uploadCmd.Flags().String("libvirt-connection", "", "connection URI (only for type=libvirt)")
-	uploadCmd.Flags().String("libvirt-pool", "", "pool name (only for type=libvirt)")
-	uploadCmd.Flags().String("libvirt-volume", "", "volume name (only for type=libvirt)")
-	uploadCmd.Flags().String("openstack-image", "", "name for the uploaded image (only for type=openstack)")
-	uploadCmd.Flags().String("openstack-disk-format", "raw", "the disk format of a virtual machine image (only for type=openstack)")
-	uploadCmd.Flags().String("openstack-container-format", "bare", "this indicates if the image contains metadata about the VM (only for type=openstack)")
-	uploadCmd.Flags().String("ibmcloud-bucket", "", "target bucket name for storing the image (only for type=ibmcloud)")
-	uploadCmd.Flags().String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for type=ibmcloud)")
-	uploadCmd.Flags().String("ibmcloud-image-name", "", "name for the uploaded image (only for type=ibmcloud)")
-	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
+	uploadCmd.Flags().Var(&setOnceString{name: "libvirt-connection"}, "libvirt-connection", "connection URI (only for type=libvirt)")
+	uploadCmd.Flags().Var(&setOnceString{name: "libvirt-pool"}, "libvirt-pool", "pool name (only for type=libvirt)")
+	uploadCmd.Flags().Var(&setOnceString{name: "libvirt-volume"}, "libvirt-volume", "volume name (only for type=libvirt)")
+	uploadCmd.Flags().Var(&setOnceString{name: "openstack-image"}, "openstack-image", "name for the uploaded image (only for type=openstack)")
+	uploadCmd.Flags().Var(&setOnceString{name: "openstack-disk-format", val: "raw"}, "openstack-disk-format", "the disk format of a virtual machine image (only for type=openstack)")
+	uploadCmd.Flags().Var(&setOnceString{name: "openstack-container-format", val: "bare"}, "openstack-container-format", "this indicates if the image contains metadata about the VM (only for type=openstack)")
+	uploadCmd.Flags().Var(&setOnceString{name: "ibmcloud-bucket"}, "ibmcloud-bucket", "target bucket name for storing the image (only for type=ibmcloud)")
+	uploadCmd.Flags().Var(&setOnceString{name: "ibmcloud-region"}, "ibmcloud-region", "target region for IBM Cloud uploads (only for type=ibmcloud)")
+	uploadCmd.Flags().Var(&setOnceString{name: "ibmcloud-image-name"}, "ibmcloud-image-name", "name for the uploaded image (only for type=ibmcloud)")
+	uploadCmd.Flags().Var(&setOnceString{name: "arch"}, "arch", "upload for the given architecture")
 	rootCmd.AddCommand(uploadCmd)
 
 	buildCmd := &cobra.Command{
@@ -827,18 +827,18 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
-	buildCmd.Flags().String("cache", defaultCacheDir(), `osbuild directory to cache intermediate build artifacts"`)
+	buildCmd.Flags().Var(&setOnceString{name: "cache", val: defaultCacheDir()}, "cache", `osbuild directory to cache intermediate build artifacts"`)
 	// XXX: add "--verbose" here, similar to how bib is doing this
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
-	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
+	buildCmd.Flags().Var(&setOnceString{name: "progress", val: "auto"}, "progress", "type of progress bar to use (e.g. verbose,term)")
 	buildCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
-	buildCmd.Flags().String("output-name", "", "set specific output basename")
+	buildCmd.Flags().Var(&setOnceString{name: "output-name"}, "output-name", "set specific output basename")
 	buildCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
 	// add after the rest of the uploadCmd flag set is added to avoid
 	// that build gets a "--to" parameter
-	uploadCmd.Flags().String("to", "", "upload to the given cloud")
+	uploadCmd.Flags().Var(&setOnceString{name: "to"}, "to", "upload to the given cloud")
 
 	// XXX: add --format=json too?
 	describeImgCmd := &cobra.Command{
@@ -850,8 +850,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Hidden:       false,
 		Aliases:      []string{"describe-image"},
 	}
-	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
-	describeImgCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
+	describeImgCmd.Flags().Var(&setOnceString{name: "arch"}, "arch", `use the different architecture`)
+	describeImgCmd.Flags().Var(&setOnceString{name: "distro"}, "distro", `build manifest for a different distroname (e.g. centos-9)`)
 	describeImgCmd.Flags().Bool("in-vm", false, `run container in a virtual machine`)
 
 	rootCmd.AddCommand(describeImgCmd)
