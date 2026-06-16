@@ -6,6 +6,8 @@ import subprocess
 
 import pytest
 
+from test_utils import subprocess_retry_run
+
 # put common podman run args in once place
 podman_run = [
     "podman", "run", "--rm", "--privileged",
@@ -94,8 +96,8 @@ def test_manifest_seeded_is_the_same(build_container, use_seed_arg):
 def test_manifest_bootc_build_container(build_container):
     bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
     bootc_build_container_ref = "quay.io/centos-bootc/centos-bootc:stream10"
-    subprocess.check_call(["podman", "pull", bootc_ref])
-    subprocess.check_call(["podman", "pull", bootc_build_container_ref])
+    subprocess_retry_run(["podman", "pull", bootc_ref])
+    subprocess_retry_run(["podman", "pull", bootc_build_container_ref])
 
     output = subprocess.check_output(podman_run + [
         build_container,
@@ -130,8 +132,8 @@ def test_container_manifest_bootc_iso_smoke(build_container):
     # that we get a manifest with the right refs its good enough.
     bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
     bootc_payload_ref = "quay.io/centos-bootc/centos-bootc:stream10"
-    subprocess.check_call(["podman", "pull", bootc_ref])
-    subprocess.check_call(["podman", "pull", bootc_payload_ref])
+    subprocess_retry_run(["podman", "pull", bootc_ref])
+    subprocess_retry_run(["podman", "pull", bootc_payload_ref])
     output = subprocess.check_output(podman_run + [
         build_container,
         "manifest",
@@ -191,7 +193,7 @@ def test_manifest_honors_rpmmd_cache(tmp_path, build_container):
     ("quay.io/centos-bootc/centos-bootc:stream9", ""),
 ])
 def test_container_manifest_bootc_smoke(build_container, bootc_ref, defaultfs):
-    subprocess.check_call(["podman", "pull", bootc_ref])
+    subprocess_retry_run(["podman", "pull", bootc_ref])
     bootc_default_fs = []
     if defaultfs:
         bootc_default_fs = ["--bootc-default-fs", defaultfs]
