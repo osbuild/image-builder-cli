@@ -8,30 +8,60 @@ on:  # yamllint disable-line rule:truthy
     - cron: "0 6 * * 1"
 
 jobs:
-  bump-deps-only-images:
+  update-and-push:
     runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:43
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - name: Prepare environment and run tests
+        run: |
+          set -xe
+          sudo dnf -y install git gh jq golang skopeo libvirt-devel gpgme-devel btrfs-progs-devel krb5-devel
+          git clone --depth 1 https://github.com/osbuild/image-builder-cli
+          cd image-builder-cli/
+          make build test
 
-      - name: Run gobump-deps action - images
-        uses: lzap/gobump@main
-        with:
-          go_version: "1.24.12"
-          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
-          include: "github.com/osbuild/images github.com/osbuild/blueprint"
-          commit_message: "deps: bump osbuild/images dependency"
+      - name: Run gobump and open a PR
+        env:
+          GH_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+        run: |
+          set -xe
+          cd image-builder-cli/
+          git config user.name "schutzbot"
+          git config user.email "schutzbot@gmail.com"
+          branch="schutz-gobump-$(date -I)"
+          git checkout -b "${branch}"
+          go run github.com/lzap/gobump@latest \
+            -exec "make build" \
+            -verbose -format markdown | tee "/tmp/github_pr_body.txt"
 
-  bump-deps-without-images:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+          # Vendor dependencies to get the exact version that will be tested
+          go mod vendor
 
-      - name: Run gobump-deps action - all other
-        uses: lzap/gobump@main
-        with:
-          go_version: "1.24.12"
-          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
-          exclude: "github.com/osbuild/images,github.com/osbuild/blueprint"
-          commit_message: "deps: update dependencies (w/o osbuild/images)"
+          # Check and update spec file version if needed
+          REQUIRED_VERSION=$(cat "vendor/github.com/osbuild/images/data/dependencies/osbuild" | tr -d '[:space:]')
+          CURRENT_VERSION=$(grep '^%global min_osbuild_version' image-builder.spec | awk '{print $3}')
+          MAX_VERSION=$(printf '%s\n' "${CURRENT_VERSION}" "${REQUIRED_VERSION}" | sort -V | tail -n1)
+
+          if [ "${MAX_VERSION}" = "${REQUIRED_VERSION}" ] && [ "${REQUIRED_VERSION}" != "${CURRENT_VERSION}" ]; then
+            echo "Updating spec file version from ${CURRENT_VERSION} to ${REQUIRED_VERSION}"
+            sed -i "s/^%global min_osbuild_version .*/%global min_osbuild_version ${REQUIRED_VERSION}/" image-builder.spec
+            git add image-builder.spec
+            git commit -m "chore: update spec with new images minimum version"
+          else
+            echo "Skipping spec file update..."
+          fi
+
+          git log --oneline "main..${branch}"
+          git push -f "https://$GH_TOKEN@github.com/schutzbot/image-builder-cli.git" "${branch}"
+
+          # Check if PR already exists for this branch
+          if gh pr list --repo "osbuild/image-builder-cli" --head "schutzbot:${branch}" --json number --jq '.[0].number' | grep -q .; then
+            echo "PR already exists for branch ${branch}, force push updated it"
+          else
+            gh pr create \
+              -t "Update dependencies $(date -I)" \
+              -F "/tmp/github_pr_body.txt" \
+              --repo "osbuild/image-builder-cli" \
+              --base "main" \
+              --head "schutzbot:${branch}"
+          fi
