@@ -1,3 +1,10 @@
+# Migration
+
+> [!CAUTION]
+> The `image-builder-cli` repository has been merged into the [`image-builder`](https://github.com/osbuild/image-builder) repository. All issues have been migrated and this repository has been archived.
+
+---
+
 # image-builder CLI
 
 Build images from the command line in a convenient way.
